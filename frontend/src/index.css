@@ -1,0 +1,278 @@
+/* ==========================================================================
+   ENGINE INTELLIGENCE — Design System & Tokens
+   Aesthetic: Editorial Surrealism
+   Strict Color System:
+     70% Warm Chalk (#F1EBDD)
+     15% Ink Black (#20201E)
+     10% Petrol Teal (#176B70) - Primary Accent
+      5% Tangerine (#F28B45) - Secondary Accent
+   ========================================================================== */
+
+:root {
+  /* Color Identity */
+  --bg-warm-chalk: #F1EBDD;
+  --bg-warm-stone: #DED5C5;
+  --bg-warm-stone-light: #EBE4D5;
+  --bg-warm-stone-dark: #C9BFAC;
+  --bg-charcoal: #151513;
+  --bg-charcoal-subtle: #20201E;
+
+  --text-ink-black: #20201E;
+  --text-ink-muted: #5F5E56;
+  --text-ink-faint: #8E8B7F;
+  --text-light-muted: #A8A69E;
+  --text-light-bright: #F5F3ED;
+
+  /* Primary Signature Accent: Petrol Teal */
+  --accent-petrol-teal: #176B70;
+  --accent-petrol-teal-light: #20868C;
+  --accent-petrol-teal-dark: #104C4F;
+  --accent-petrol-teal-subtle: rgba(23, 107, 112, 0.12);
+  --accent-petrol-teal-border: rgba(23, 107, 112, 0.28);
+
+  /* Secondary Contrasting Accent: Tangerine */
+  --accent-tangerine: #F28B45;
+  --accent-tangerine-hover: #E47930;
+  --accent-tangerine-subtle: rgba(242, 139, 69, 0.14);
+  --accent-tangerine-border: rgba(242, 139, 69, 0.32);
+
+  /* Borders & Shadows */
+  --border-subtle: rgba(32, 32, 30, 0.12);
+  --border-medium: rgba(32, 32, 30, 0.22);
+  --border-dashed: rgba(32, 32, 30, 0.30);
+  --border-dark: rgba(255, 255, 255, 0.10);
+
+  /* Typography */
+  --font-editorial: 'Cormorant Garamond', Garamond, 'Didot', 'Times New Roman', serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Space Mono', 'JetBrains Mono', Consolas, monospace;
+
+  /* Geometry */
+  --radius-sm: 6px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+}
+
+/* Reset & Global Canvas Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--bg-warm-chalk);
+  color: var(--text-ink-black);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Hide default cursor on desktop when custom cursor is active */
+@media (pointer: fine) {
+  body.has-custom-cursor,
+  body.has-custom-cursor a,
+  body.has-custom-cursor button,
+  body.has-custom-cursor input {
+    cursor: none !important;
+  }
+}
+
+/* Subtle Paper-Grain Texture Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.038;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Custom Scrollbar in Warm Chalk & Petrol Teal */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-warm-chalk);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-warm-stone);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-petrol-teal);
+}
+
+/* Typography Helpers */
+.font-editorial {
+  font-family: var(--font-editorial);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Buttons adhering to Petrol Teal & Tangerine palette */
+.btn-editorial-teal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: var(--accent-petrol-teal);
+  color: #FFFFFF;
+  padding: 12px 26px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(23, 107, 112, 0.28);
+}
+
+.btn-editorial-teal:hover {
+  background-color: var(--accent-tangerine);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(242, 139, 69, 0.38);
+}
+
+.btn-editorial-tangerine {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: var(--accent-tangerine);
+  color: #FFFFFF;
+  padding: 12px 26px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(242, 139, 69, 0.28);
+}
+
+.btn-editorial-tangerine:hover {
+  background-color: var(--accent-petrol-teal);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(23, 107, 112, 0.38);
+}
+
+.btn-editorial-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: transparent;
+  color: var(--text-ink-black);
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--border-medium);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-editorial-outline:hover {
+  background-color: var(--accent-petrol-teal);
+  color: #FFFFFF;
+  border-color: var(--accent-petrol-teal);
+}
+
+/* Upload Dropzone Container */
+.upload-dropzone {
+  border: 1.5px dashed var(--border-dashed);
+  border-radius: var(--radius-lg);
+  background: rgba(222, 213, 197, 0.38);
+  backdrop-filter: blur(8px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.active-drag {
+  border-color: var(--accent-petrol-teal);
+  background: rgba(23, 107, 112, 0.08);
+  transform: scale(1.008);
+}
+
+/* Animations */
+@keyframes wireframeDraw {
+  0% {
+    stroke-dashoffset: 400;
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-float {
+  animation: floatGentle 5s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .responsive-hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-hidden-mobile {
+    display: none !important;
+  }
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+}

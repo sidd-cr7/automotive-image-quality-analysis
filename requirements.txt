@@ -1,0 +1,18 @@
+# Core Deep Learning & Computer Vision
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.0.0
+opencv-python>=4.7.0
+pillow>=9.0.0
+numpy>=1.23.0
+scipy>=1.9.0
+
+# API Backend & Web Framework
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
+python-multipart>=0.0.6
+pydantic>=2.0.0
+
+# Testing & Utilities
+pytest>=7.0.0
+httpx>=0.24.0

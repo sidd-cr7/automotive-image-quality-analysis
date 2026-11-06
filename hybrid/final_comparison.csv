@@ -1,0 +1,3 @@
+Approach,Validation Accuracy,Accuracy (%)
+Deep Learning (ResNet50),0.32,32.0
+Hybrid (ResNet50 + CV),0.31,31.0

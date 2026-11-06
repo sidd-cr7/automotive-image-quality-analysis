@@ -1,0 +1,1151 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-11-06",
+  "metadata": {
+    "description": "Verified automotive specifications and baseline market pricing database for AUTOVISION AI.",
+    "primary_sources": [
+      "Manufacturer Official Spec Sheets (BMW, Mercedes-Benz, Audi, Honda, Toyota, Ford, Hyundai, Maruti Suzuki, Tata, Mahindra)",
+      "CarWale & CarDekho Automotive Database (India)",
+      "Society of Indian Automobile Manufacturers (SIAM)",
+      "Kelley Blue Book & Edmunds Technical Index (USA)"
+    ]
+  },
+  "regional_settings": {
+    "default_region": "India",
+    "supported_regions": {
+      "India": {
+        "currency": "INR",
+        "currency_symbol": "₹",
+        "source_name": "CarWale / CarDekho Indicative Secondary Market Index (India)",
+        "source_url": "https://www.carwale.com/used/",
+        "standard_annual_mileage_km": 12000,
+        "luxury_annual_mileage_km": 9000,
+        "mileage_unit": "km"
+      },
+      "USA": {
+        "currency": "USD",
+        "currency_symbol": "$",
+        "source_name": "Kelley Blue Book / Edmunds Secondary Valuation (USA)",
+        "source_url": "https://www.kbb.com/used-cars/",
+        "standard_annual_mileage_km": 19300,
+        "luxury_annual_mileage_km": 16000,
+        "mileage_unit": "miles"
+      },
+      "UK": {
+        "currency": "GBP",
+        "currency_symbol": "£",
+        "source_name": "AutoTrader UK / Parkers Used Valuation Guide",
+        "source_url": "https://www.autotrader.co.uk/",
+        "standard_annual_mileage_km": 16000,
+        "luxury_annual_mileage_km": 13000,
+        "mileage_unit": "miles"
+      },
+      "Europe": {
+        "currency": "EUR",
+        "currency_symbol": "€",
+        "source_name": "Mobile.de / AutoScout24 Market Index",
+        "source_url": "https://www.autoscout24.com/",
+        "standard_annual_mileage_km": 15000,
+        "luxury_annual_mileage_km": 12000,
+        "mileage_unit": "km"
+      }
+    }
+  },
+  "vehicles": [
+    {
+      "make": "BMW",
+      "model": "3 Series Sedan",
+      "aliases": ["3 Series", "BMW 3 Series", "320d", "328i", "330i", "3 Series Sedan"],
+      "body_type": "Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "6th Gen (F30)",
+          "years": [2012, 2013, 2014, 2015, 2016, 2017, 2018],
+          "default_variant": "320d / 328i Luxury Line",
+          "engine": {
+            "displacement": "2.0L (1997 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol / Diesel",
+            "aspiration": "TwinPower Turbocharged",
+            "horsepower": 241,
+            "torque_nm": 350,
+            "cylinders": 4
+          },
+          "transmission": "8-speed Steptronic Automatic",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 4250000,
+            "USD": 38900,
+            "EUR": 36500,
+            "GBP": 31500
+          },
+          "source": "BMW Group Official Technical Specifications / CarWale India Catalog",
+          "source_url": "https://www.carwale.com/bmw-cars/3-series/"
+        },
+        {
+          "generation": "5th Gen (E90)",
+          "years": [2005, 2006, 2007, 2008, 2009, 2010, 2011],
+          "default_variant": "320i / 325i Sedan",
+          "engine": {
+            "displacement": "2.5L (2497 cc)",
+            "configuration": "Inline-6",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated",
+            "horsepower": 215,
+            "torque_nm": 250,
+            "cylinders": 6
+          },
+          "transmission": "6-speed Steptronic Automatic",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 3400000,
+            "USD": 34500,
+            "EUR": 32000,
+            "GBP": 27500
+          },
+          "source": "BMW Group Official Technical Specifications",
+          "source_url": "https://www.bmw.com/"
+        },
+        {
+          "generation": "7th Gen (G20)",
+          "years": [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "default_variant": "330i M Sport / 320d",
+          "engine": {
+            "displacement": "2.0L (1998 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "TwinPower Turbocharged",
+            "horsepower": 255,
+            "torque_nm": 400,
+            "cylinders": 4
+          },
+          "transmission": "8-speed Steptronic Sport Automatic",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 5600000,
+            "USD": 44500,
+            "EUR": 42000,
+            "GBP": 37500
+          },
+          "source": "BMW Group Official Specifications / SIAM Automotive Database",
+          "source_url": "https://www.carwale.com/bmw-cars/3-series/"
+        }
+      ]
+    },
+    {
+      "make": "BMW",
+      "model": "5 Series Sedan",
+      "aliases": ["5 Series", "BMW 5 Series", "520d", "530i", "530d"],
+      "body_type": "Executive Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "6th Gen (F10)",
+          "years": [2010, 2011, 2012, 2013, 2014, 2015, 2016],
+          "default_variant": "520d Luxury Line",
+          "engine": {
+            "displacement": "2.0L (1995 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel",
+            "aspiration": "TwinPower Turbocharged",
+            "horsepower": 190,
+            "torque_nm": 400,
+            "cylinders": 4
+          },
+          "transmission": "8-speed Steptronic Automatic",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 5300000,
+            "USD": 51000,
+            "EUR": 48000,
+            "GBP": 41000
+          },
+          "source": "BMW AG Specifications / CarWale India",
+          "source_url": "https://www.carwale.com/bmw-cars/5-series/"
+        },
+        {
+          "generation": "7th Gen (G30)",
+          "years": [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "default_variant": "530i M Sport",
+          "engine": {
+            "displacement": "2.0L (1998 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "TwinPower Turbocharged",
+            "horsepower": 248,
+            "torque_nm": 350,
+            "cylinders": 4
+          },
+          "transmission": "8-speed Steptronic Sport Automatic",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 6800000,
+            "USD": 56000,
+            "EUR": 53000,
+            "GBP": 46000
+          },
+          "source": "BMW AG Technical Specifications",
+          "source_url": "https://www.carwale.com/bmw-cars/5-series/"
+        }
+      ]
+    },
+    {
+      "make": "BMW",
+      "model": "M3 Coupe",
+      "aliases": ["M3", "BMW M3", "M3 Sedan", "M3 Convertible"],
+      "body_type": "Coupe",
+      "seating_capacity": 4,
+      "generations": [
+        {
+          "generation": "4th Gen (E92)",
+          "years": [2007, 2008, 2009, 2010, 2011, 2012, 2013],
+          "default_variant": "M3 Base Coupe",
+          "engine": {
+            "displacement": "4.0L (3999 cc)",
+            "configuration": "V8",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated (High-Revving S65)",
+            "horsepower": 414,
+            "torque_nm": 400,
+            "cylinders": 8
+          },
+          "transmission": "7-speed M Double-Clutch Transmission (M-DCT)",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 8200000,
+            "USD": 61000,
+            "EUR": 58000,
+            "GBP": 52000
+          },
+          "source": "BMW M Motorsport Specifications",
+          "source_url": "https://www.bmw-m.com/"
+        }
+      ]
+    },
+    {
+      "make": "Audi",
+      "model": "A4 Sedan",
+      "aliases": ["A4", "Audi A4", "A4 Avant"],
+      "body_type": "Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "8th Gen (B8)",
+          "years": [2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015],
+          "default_variant": "2.0 TDI / 2.0 TFSI Premium Plus",
+          "engine": {
+            "displacement": "2.0L (1968 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel / Petrol",
+            "aspiration": "Turbocharged",
+            "horsepower": 174,
+            "torque_nm": 380,
+            "cylinders": 4
+          },
+          "transmission": "Multitronic CVT / 7-speed S-Tronic",
+          "drivetrain": "FWD / quattro AWD",
+          "msrp_new": {
+            "INR": 3800000,
+            "USD": 36000,
+            "EUR": 34000,
+            "GBP": 29000
+          },
+          "source": "Audi AG Official Specifications / CarWale India",
+          "source_url": "https://www.carwale.com/audi-cars/a4/"
+        },
+        {
+          "generation": "9th Gen (B9)",
+          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "default_variant": "40 TFSI Technology",
+          "engine": {
+            "displacement": "2.0L (1984 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Turbocharged",
+            "horsepower": 201,
+            "torque_nm": 320,
+            "cylinders": 4
+          },
+          "transmission": "7-speed S-Tronic Dual-Clutch",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 4600000,
+            "USD": 41000,
+            "EUR": 38500,
+            "GBP": 34000
+          },
+          "source": "Audi AG Technical Data",
+          "source_url": "https://www.carwale.com/audi-cars/a4/"
+        }
+      ]
+    },
+    {
+      "make": "Audi",
+      "model": "R8 Coupe",
+      "aliases": ["R8", "Audi R8", "R8 Spyder"],
+      "body_type": "Supercar / Coupe",
+      "seating_capacity": 2,
+      "generations": [
+        {
+          "generation": "1st Gen (Typ 42)",
+          "years": [2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015],
+          "default_variant": "4.2 FSI quattro / 5.2 V10",
+          "engine": {
+            "displacement": "4.2L (4163 cc)",
+            "configuration": "V8",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated FSI",
+            "horsepower": 424,
+            "torque_nm": 430,
+            "cylinders": 8
+          },
+          "transmission": "6-speed Manual / 7-speed S-Tronic",
+          "drivetrain": "quattro Permanent AWD",
+          "msrp_new": {
+            "INR": 14500000,
+            "USD": 118000,
+            "EUR": 110000,
+            "GBP": 95000
+          },
+          "source": "Audi Sport GmbH Official Specifications",
+          "source_url": "https://www.audi.com/"
+        }
+      ]
+    },
+    {
+      "make": "Mercedes-Benz",
+      "model": "C-Class Sedan",
+      "aliases": ["C-Class", "Mercedes C-Class", "C200", "C220d", "C300"],
+      "body_type": "Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "4th Gen (W205)",
+          "years": [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021],
+          "default_variant": "C220d Avantgarde / C200",
+          "engine": {
+            "displacement": "2.0L (1950 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel / Petrol",
+            "aspiration": "Turbocharged",
+            "horsepower": 194,
+            "torque_nm": 400,
+            "cylinders": 4
+          },
+          "transmission": "9G-TRONIC 9-speed Automatic",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 4800000,
+            "USD": 42000,
+            "EUR": 39500,
+            "GBP": 35000
+          },
+          "source": "Mercedes-Benz AG Official Technical Sheet",
+          "source_url": "https://www.carwale.com/mercedes-benz-cars/c-class/"
+        },
+        {
+          "generation": "3rd Gen (W204)",
+          "years": [2007, 2008, 2009, 2010, 2011, 2012, 2013],
+          "default_variant": "C220 CDI / C200 Kompressor",
+          "engine": {
+            "displacement": "2.1L (2143 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel",
+            "aspiration": "Turbocharged",
+            "horsepower": 168,
+            "torque_nm": 400,
+            "cylinders": 4
+          },
+          "transmission": "7G-TRONIC 7-speed Automatic",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 3600000,
+            "USD": 35000,
+            "EUR": 33000,
+            "GBP": 29000
+          },
+          "source": "Mercedes-Benz AG Technical Archive",
+          "source_url": "https://www.mercedes-benz.com/"
+        }
+      ]
+    },
+    {
+      "make": "Honda",
+      "model": "Civic",
+      "aliases": ["Civic", "Honda Civic Sedan", "Civic Coupe"],
+      "body_type": "Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "9th Gen",
+          "years": [2011, 2012, 2013, 2014, 2015],
+          "default_variant": "1.8 EX / VTi-L",
+          "engine": {
+            "displacement": "1.8L (1798 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated i-VTEC",
+            "horsepower": 141,
+            "torque_nm": 174,
+            "cylinders": 4
+          },
+          "transmission": "5-speed Automatic / 5-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 1400000,
+            "USD": 21000,
+            "EUR": 19500,
+            "GBP": 17000
+          },
+          "source": "Honda Motor Co. Technical Specifications / CarDekho",
+          "source_url": "https://www.cardekho.com/carmodels/Honda/Honda_Civic"
+        },
+        {
+          "generation": "10th Gen",
+          "years": [2016, 2017, 2018, 2019, 2020, 2021],
+          "default_variant": "ZX 1.8 i-VTEC CVT / 1.5L Turbo",
+          "engine": {
+            "displacement": "1.8L (1799 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated i-VTEC",
+            "horsepower": 140,
+            "torque_nm": 174,
+            "cylinders": 4
+          },
+          "transmission": "CVT Automatic",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 2100000,
+            "USD": 23500,
+            "EUR": 22000,
+            "GBP": 19000
+          },
+          "source": "Honda Cars India Specification Sheet",
+          "source_url": "https://www.carwale.com/honda-cars/civic/"
+        }
+      ]
+    },
+    {
+      "make": "Honda",
+      "model": "Accord",
+      "aliases": ["Accord", "Honda Accord Sedan"],
+      "body_type": "Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "9th Gen",
+          "years": [2013, 2014, 2015, 2016, 2017],
+          "default_variant": "2.4L i-VTEC / 2.0L Hybrid",
+          "engine": {
+            "displacement": "2.4L (2356 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated Earth Dreams",
+            "horsepower": 185,
+            "torque_nm": 245,
+            "cylinders": 4
+          },
+          "transmission": "CVT Automatic",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 2800000,
+            "USD": 25500,
+            "EUR": 24000,
+            "GBP": 21000
+          },
+          "source": "Honda Motor Co. Technical Specifications",
+          "source_url": "https://www.carwale.com/honda-cars/accord/"
+        },
+        {
+          "generation": "8th Gen",
+          "years": [2008, 2009, 2010, 2011, 2012],
+          "default_variant": "2.4 Elegance / 3.5 V6",
+          "engine": {
+            "displacement": "2.4L (2354 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated i-VTEC",
+            "horsepower": 178,
+            "torque_nm": 222,
+            "cylinders": 4
+          },
+          "transmission": "5-speed Automatic",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 2000000,
+            "USD": 23000,
+            "EUR": 21000,
+            "GBP": 18500
+          },
+          "source": "Honda Technical Archive",
+          "source_url": "https://www.cardekho.com/carmodels/Honda/Honda_Accord"
+        }
+      ]
+    },
+    {
+      "make": "Honda",
+      "model": "City",
+      "aliases": ["City", "Honda City", "City Sedan"],
+      "body_type": "Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "5th Gen",
+          "years": [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "default_variant": "ZX 1.5 i-VTEC",
+          "engine": {
+            "displacement": "1.5L (1498 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated i-VTEC DOHC",
+            "horsepower": 119,
+            "torque_nm": 145,
+            "cylinders": 4
+          },
+          "transmission": "7-speed CVT / 6-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 1550000,
+            "USD": 18500,
+            "EUR": 17000,
+            "GBP": 15000
+          },
+          "source": "Honda Cars India Official Specifications",
+          "source_url": "https://www.carwale.com/honda-cars/city/"
+        },
+        {
+          "generation": "4th Gen",
+          "years": [2014, 2015, 2016, 2017, 2018, 2019],
+          "default_variant": "VX 1.5 i-VTEC",
+          "engine": {
+            "displacement": "1.5L (1497 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated i-VTEC",
+            "horsepower": 117,
+            "torque_nm": 145,
+            "cylinders": 4
+          },
+          "transmission": "CVT Automatic / 5-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 1150000,
+            "USD": 16000,
+            "EUR": 15000,
+            "GBP": 13000
+          },
+          "source": "Honda Cars India Catalog",
+          "source_url": "https://www.cardekho.com/carmodels/Honda/Honda_City"
+        }
+      ]
+    },
+    {
+      "make": "Toyota",
+      "model": "Camry Sedan",
+      "aliases": ["Camry", "Toyota Camry", "Camry Hybrid"],
+      "body_type": "Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "8th Gen (XV70)",
+          "years": [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
+          "default_variant": "2.5 Hybrid",
+          "engine": {
+            "displacement": "2.5L (2487 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol Hybrid",
+            "aspiration": "Naturally Aspirated Dual VVT-i + Electric Motor",
+            "horsepower": 215,
+            "torque_nm": 221,
+            "cylinders": 4
+          },
+          "transmission": "e-CVT Automatic",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 4400000,
+            "USD": 27500,
+            "EUR": 26000,
+            "GBP": 23000
+          },
+          "source": "Toyota Motor Corporation Official Specs / CarWale India",
+          "source_url": "https://www.carwale.com/toyota-cars/camry/"
+        },
+        {
+          "generation": "7th Gen (XV50)",
+          "years": [2011, 2012, 2013, 2014, 2015, 2016, 2017],
+          "default_variant": "2.5L AT / Hybrid",
+          "engine": {
+            "displacement": "2.5L (2494 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated Dual VVT-i",
+            "horsepower": 178,
+            "torque_nm": 233,
+            "cylinders": 4
+          },
+          "transmission": "6-speed Super ECT Automatic",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 2600000,
+            "USD": 24000,
+            "EUR": 22500,
+            "GBP": 19500
+          },
+          "source": "Toyota Technical Specifications Archive",
+          "source_url": "https://www.toyota.com/"
+        }
+      ]
+    },
+    {
+      "make": "Toyota",
+      "model": "Corolla Sedan",
+      "aliases": ["Corolla", "Toyota Corolla", "Corolla Altis"],
+      "body_type": "Sedan",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "11th Gen (E170 / Altis)",
+          "years": [2013, 2014, 2015, 2016, 2017, 2018, 2019],
+          "default_variant": "Altis 1.8 VL AT / 1.4 D-4D",
+          "engine": {
+            "displacement": "1.8L (1798 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated Dual VVT-i",
+            "horsepower": 138,
+            "torque_nm": 173,
+            "cylinders": 4
+          },
+          "transmission": "7-speed Super CVT-i / 6-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 1750000,
+            "USD": 20000,
+            "EUR": 18500,
+            "GBP": 16000
+          },
+          "source": "Toyota Kirloskar Motor Specification Sheet",
+          "source_url": "https://www.carwale.com/toyota-cars/corolla-altis/"
+        }
+      ]
+    },
+    {
+      "make": "Toyota",
+      "model": "Fortuner",
+      "aliases": ["Fortuner", "Toyota Fortuner", "Fortuner 4x4", "Fortuner Legender"],
+      "body_type": "Ladder-frame SUV",
+      "seating_capacity": 7,
+      "generations": [
+        {
+          "generation": "2nd Gen (AN160)",
+          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "default_variant": "2.8 4x4 AT",
+          "engine": {
+            "displacement": "2.8L (2755 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel",
+            "aspiration": "Variable Nozzle Turbocharged (1GD-FTV)",
+            "horsepower": 201,
+            "torque_nm": 500,
+            "cylinders": 4
+          },
+          "transmission": "6-speed Sequential Automatic",
+          "drivetrain": "Part-time 4WD with High/Low Range",
+          "msrp_new": {
+            "INR": 3800000,
+            "USD": 45000,
+            "EUR": 42000,
+            "GBP": 37000
+          },
+          "source": "Toyota Kirloskar Motor Official Specifications",
+          "source_url": "https://www.carwale.com/toyota-cars/fortuner/"
+        },
+        {
+          "generation": "1st Gen (AN60)",
+          "years": [2009, 2010, 2011, 2012, 2013, 2014, 2015],
+          "default_variant": "3.0 D-4D 4x4",
+          "engine": {
+            "displacement": "3.0L (2982 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel",
+            "aspiration": "Intercooled Turbocharged (1KD-FTV)",
+            "horsepower": 169,
+            "torque_nm": 343,
+            "cylinders": 4
+          },
+          "transmission": "5-speed Automatic / 5-speed Manual",
+          "drivetrain": "Full-time 4WD",
+          "msrp_new": {
+            "INR": 2300000,
+            "USD": 32000,
+            "EUR": 30000,
+            "GBP": 26000
+          },
+          "source": "Toyota Technical Archive",
+          "source_url": "https://www.cardekho.com/carmodels/Toyota/Toyota_Fortuner"
+        }
+      ]
+    },
+    {
+      "make": "Toyota",
+      "model": "Innova",
+      "aliases": ["Innova", "Toyota Innova", "Innova Crysta", "Innova Hycross"],
+      "body_type": "MPV",
+      "seating_capacity": 7,
+      "generations": [
+        {
+          "generation": "2nd Gen (Innova Crysta)",
+          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+          "default_variant": "2.4 ZX AT",
+          "engine": {
+            "displacement": "2.4L (2393 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel",
+            "aspiration": "Turbocharged (2GD-FTV)",
+            "horsepower": 148,
+            "torque_nm": 360,
+            "cylinders": 4
+          },
+          "transmission": "6-speed Automatic / 5-speed Manual",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 2500000,
+            "USD": 30000,
+            "EUR": 28000,
+            "GBP": 24500
+          },
+          "source": "Toyota Kirloskar Motor Specification Sheet",
+          "source_url": "https://www.carwale.com/toyota-cars/innova-crysta/"
+        }
+      ]
+    },
+    {
+      "make": "Ford",
+      "model": "F-150",
+      "aliases": ["F-150", "Ford F-150", "F150", "F-150 Regular Cab", "F-150 SuperCab", "F-150 SuperCrew"],
+      "body_type": "Pickup Truck",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "13th Gen",
+          "years": [2015, 2016, 2017, 2018, 2019, 2020],
+          "default_variant": "XLT 3.5L V6 EcoBoost / 5.0L V8",
+          "engine": {
+            "displacement": "3.5L (3496 cc)",
+            "configuration": "V6",
+            "fuel_type": "Petrol",
+            "aspiration": "Twin-Turbocharged EcoBoost",
+            "horsepower": 375,
+            "torque_nm": 637,
+            "cylinders": 6
+          },
+          "transmission": "10-speed SelectShift Automatic",
+          "drivetrain": "4WD / RWD",
+          "msrp_new": {
+            "INR": 5200000,
+            "USD": 38000,
+            "EUR": 35000,
+            "GBP": 31000
+          },
+          "source": "Ford Motor Company Official Specifications",
+          "source_url": "https://www.ford.com/trucks/f150/"
+        },
+        {
+          "generation": "12th Gen",
+          "years": [2009, 2010, 2011, 2012, 2013, 2014],
+          "default_variant": "XLT 5.0L V8 / 3.5L EcoBoost",
+          "engine": {
+            "displacement": "5.0L (4951 cc)",
+            "configuration": "V8",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated Ti-VCT Coyote",
+            "horsepower": 360,
+            "torque_nm": 515,
+            "cylinders": 8
+          },
+          "transmission": "6-speed Automatic",
+          "drivetrain": "4WD",
+          "msrp_new": {
+            "INR": 4200000,
+            "USD": 32000,
+            "EUR": 29000,
+            "GBP": 26000
+          },
+          "source": "Ford Motor Company Technical Archive",
+          "source_url": "https://www.ford.com/"
+        }
+      ]
+    },
+    {
+      "make": "Ford",
+      "model": "Mustang",
+      "aliases": ["Mustang", "Ford Mustang", "Mustang Coupe", "Mustang GT"],
+      "body_type": "Coupe / Muscle Car",
+      "seating_capacity": 4,
+      "generations": [
+        {
+          "generation": "6th Gen (S550)",
+          "years": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
+          "default_variant": "GT 5.0L V8",
+          "engine": {
+            "displacement": "5.0L (4951 cc)",
+            "configuration": "V8",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated Coyote V8",
+            "horsepower": 435,
+            "torque_nm": 542,
+            "cylinders": 8
+          },
+          "transmission": "6-speed Automatic / 6-speed Manual",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 7400000,
+            "USD": 37000,
+            "EUR": 42000,
+            "GBP": 38000
+          },
+          "source": "Ford Motor Company Official Technical Sheet / CarWale India",
+          "source_url": "https://www.carwale.com/ford-cars/mustang/"
+        }
+      ]
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Silverado",
+      "aliases": ["Silverado", "Chevrolet Silverado 1500", "Silverado 1500 Regular Cab", "Silverado 1500 Extended Cab"],
+      "body_type": "Pickup Truck",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "3rd Gen (K2XX)",
+          "years": [2014, 2015, 2016, 2017, 2018],
+          "default_variant": "LT 5.3L EcoTec3 V8",
+          "engine": {
+            "displacement": "5.3L (5328 cc)",
+            "configuration": "V8",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated EcoTec3",
+            "horsepower": 355,
+            "torque_nm": 519,
+            "cylinders": 8
+          },
+          "transmission": "6-speed / 8-speed Hydra-Matic Automatic",
+          "drivetrain": "4WD",
+          "msrp_new": {
+            "INR": 5100000,
+            "USD": 36500,
+            "EUR": 34000,
+            "GBP": 30000
+          },
+          "source": "General Motors Official Technical Specifications",
+          "source_url": "https://www.chevrolet.com/trucks/silverado/1500"
+        }
+      ]
+    },
+    {
+      "make": "Chevrolet",
+      "model": "Corvette",
+      "aliases": ["Corvette", "Chevrolet Corvette", "Corvette ZR1", "Corvette Stingray"],
+      "body_type": "Sports Car / Coupe",
+      "seating_capacity": 2,
+      "generations": [
+        {
+          "generation": "7th Gen (C7)",
+          "years": [2014, 2015, 2016, 2017, 2018, 2019],
+          "default_variant": "Stingray 6.2L LT1 V8",
+          "engine": {
+            "displacement": "6.2L (6162 cc)",
+            "configuration": "V8",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated LT1 V8",
+            "horsepower": 455,
+            "torque_nm": 624,
+            "cylinders": 8
+          },
+          "transmission": "8-speed Paddle-Shift Automatic / 7-speed Manual",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 9500000,
+            "USD": 56000,
+            "EUR": 58000,
+            "GBP": 50000
+          },
+          "source": "Chevrolet Performance Technical Data",
+          "source_url": "https://www.chevrolet.com/"
+        },
+        {
+          "generation": "6th Gen (C6)",
+          "years": [2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013],
+          "default_variant": "Base / ZR1 / Z06",
+          "engine": {
+            "displacement": "6.2L (6162 cc)",
+            "configuration": "V8",
+            "fuel_type": "Petrol",
+            "aspiration": "Supercharged (ZR1 LS9) / Naturally Aspirated (LS3)",
+            "horsepower": 430,
+            "torque_nm": 575,
+            "cylinders": 8
+          },
+          "transmission": "6-speed Automatic / 6-speed Manual",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "INR": 7500000,
+            "USD": 49000,
+            "EUR": 51000,
+            "GBP": 44000
+          },
+          "source": "General Motors Technical Archive",
+          "source_url": "https://www.chevrolet.com/"
+        }
+      ]
+    },
+    {
+      "make": "Maruti Suzuki",
+      "model": "Swift",
+      "aliases": ["Swift", "Maruti Swift", "Suzuki Swift"],
+      "body_type": "Hatchback",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "3rd Gen",
+          "years": [2018, 2019, 2020, 2021, 2022, 2023],
+          "default_variant": "ZXi 1.2L K12M / AMT",
+          "engine": {
+            "displacement": "1.2L (1197 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated DualJet VVT",
+            "horsepower": 89,
+            "torque_nm": 113,
+            "cylinders": 4
+          },
+          "transmission": "5-speed AMT / 5-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 780000,
+            "USD": 9500,
+            "EUR": 8900,
+            "GBP": 7800
+          },
+          "source": "Maruti Suzuki India Limited Official Specifications",
+          "source_url": "https://www.carwale.com/maruti-suzuki-cars/swift/"
+        },
+        {
+          "generation": "2nd Gen",
+          "years": [2011, 2012, 2013, 2014, 2015, 2016, 2017],
+          "default_variant": "VXi / VDi 1.3 DDiS",
+          "engine": {
+            "displacement": "1.2L (1197 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol / Diesel",
+            "aspiration": "Naturally Aspirated K-Series",
+            "horsepower": 83,
+            "torque_nm": 115,
+            "cylinders": 4
+          },
+          "transmission": "5-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 590000,
+            "USD": 8000,
+            "EUR": 7500,
+            "GBP": 6500
+          },
+          "source": "Maruti Suzuki Technical Catalog",
+          "source_url": "https://www.cardekho.com/carmodels/Maruti/Maruti_Swift"
+        }
+      ]
+    },
+    {
+      "make": "Hyundai",
+      "model": "Creta",
+      "aliases": ["Creta", "Hyundai Creta"],
+      "body_type": "Compact SUV",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "2nd Gen",
+          "years": [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "default_variant": "SX(O) 1.5 CRDi AT / 1.5 MPi",
+          "engine": {
+            "displacement": "1.5L (1493 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel / Petrol",
+            "aspiration": "Turbocharged U2 CRDi",
+            "horsepower": 113,
+            "torque_nm": 250,
+            "cylinders": 4
+          },
+          "transmission": "6-speed Automatic / IVT",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 1850000,
+            "USD": 22000,
+            "EUR": 20500,
+            "GBP": 18000
+          },
+          "source": "Hyundai Motor India Official Specs",
+          "source_url": "https://www.carwale.com/hyundai-cars/creta/"
+        },
+        {
+          "generation": "1st Gen",
+          "years": [2015, 2016, 2017, 2018, 2019],
+          "default_variant": "SX Plus 1.6 CRDi AT",
+          "engine": {
+            "displacement": "1.6L (1582 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel",
+            "aspiration": "VGT Turbocharged CRDi",
+            "horsepower": 126,
+            "torque_nm": 260,
+            "cylinders": 4
+          },
+          "transmission": "6-speed Automatic / 6-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 1450000,
+            "USD": 19000,
+            "EUR": 17800,
+            "GBP": 15500
+          },
+          "source": "Hyundai Technical Specification Archive",
+          "source_url": "https://www.cardekho.com/carmodels/Hyundai/Hyundai_Creta"
+        }
+      ]
+    },
+    {
+      "make": "Tata",
+      "model": "Nexon",
+      "aliases": ["Nexon", "Tata Nexon", "Nexon EV"],
+      "body_type": "Compact SUV",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "1st Gen (Facelift)",
+          "years": [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "default_variant": "XZ Plus (O) 1.2 Revotron",
+          "engine": {
+            "displacement": "1.2L (1199 cc)",
+            "configuration": "Inline-3",
+            "fuel_type": "Petrol",
+            "aspiration": "Turbocharged Revotron",
+            "horsepower": 118,
+            "torque_nm": 170,
+            "cylinders": 3
+          },
+          "transmission": "6-speed AMT / 6-speed Manual / 7-speed DCA",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 1250000,
+            "USD": 15000,
+            "EUR": 14000,
+            "GBP": 12000
+          },
+          "source": "Tata Motors Passenger Vehicles Specification Sheet",
+          "source_url": "https://www.carwale.com/tata-cars/nexon/"
+        }
+      ]
+    },
+    {
+      "make": "Mahindra",
+      "model": "Thar",
+      "aliases": ["Thar", "Mahindra Thar", "Thar 4x4", "Thar Roxx"],
+      "body_type": "Off-Road SUV",
+      "seating_capacity": 4,
+      "generations": [
+        {
+          "generation": "2nd Gen",
+          "years": [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "default_variant": "LX 4x4 Hard Top 2.2 mHawk AT",
+          "engine": {
+            "displacement": "2.2L (2184 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Diesel",
+            "aspiration": "Turbocharged mHawk 130",
+            "horsepower": 130,
+            "torque_nm": 300,
+            "cylinders": 4
+          },
+          "transmission": "6-speed Torque Converter Automatic",
+          "drivetrain": "Shift-on-the-fly 4WD with Low Range",
+          "msrp_new": {
+            "INR": 1700000,
+            "USD": 21000,
+            "EUR": 19500,
+            "GBP": 17000
+          },
+          "source": "Mahindra & Mahindra Official Technical Specifications",
+          "source_url": "https://www.carwale.com/mahindra-cars/thar/"
+        }
+      ]
+    },
+    {
+      "make": "Porsche",
+      "model": "911",
+      "aliases": ["911", "Porsche 911", "911 Carrera", "911 GT3", "911 Turbo"],
+      "body_type": "Sports Car / Coupe",
+      "seating_capacity": 4,
+      "generations": [
+        {
+          "generation": "7th Gen (991)",
+          "years": [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019],
+          "default_variant": "Carrera S 3.8L / 3.0L Twin-Turbo",
+          "engine": {
+            "displacement": "3.8L (3800 cc)",
+            "configuration": "Flat-6 (Boxer)",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated / Twin-Turbocharged",
+            "horsepower": 395,
+            "torque_nm": 440,
+            "cylinders": 6
+          },
+          "transmission": "7-speed PDK Dual-Clutch / 7-speed Manual",
+          "drivetrain": "RWD / AWD",
+          "msrp_new": {
+            "INR": 14200000,
+            "USD": 98000,
+            "EUR": 105000,
+            "GBP": 88000
+          },
+          "source": "Dr. Ing. h.c. F. Porsche AG Technical Archive",
+          "source_url": "https://www.porsche.com/"
+        }
+      ]
+    },
+    {
+      "make": "Volkswagen",
+      "model": "Golf",
+      "aliases": ["Golf", "Volkswagen Golf", "Golf GTI", "Golf R"],
+      "body_type": "Hatchback",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "7th Gen (Mk7)",
+          "years": [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019],
+          "default_variant": "2.0 TSI GTI / 1.4 TSI Highline",
+          "engine": {
+            "displacement": "2.0L (1984 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Turbocharged EA888 TSI",
+            "horsepower": 217,
+            "torque_nm": 350,
+            "cylinders": 4
+          },
+          "transmission": "6-speed DSG Dual-Clutch / 6-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 2400000,
+            "USD": 25500,
+            "EUR": 26500,
+            "GBP": 22500
+          },
+          "source": "Volkswagen AG Technical Specifications",
+          "source_url": "https://www.volkswagen.com/"
+        }
+      ]
+    }
+  ]
+}

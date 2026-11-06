@@ -1,0 +1,19 @@
+{
+    "Vehicle Detection": "YOLOv8n",
+    "Classification Model": "ResNet50",
+    "Classification Top-1 Accuracy": 0.5682,
+    "Classification Top-5 Accuracy": 0.8564,
+    "Macro F1": 0.5654,
+    "DL Validation Accuracy": 0.32,
+    "Hybrid Validation Accuracy": 0.31,
+    "Hybrid Improvement": -0.010000000000000009,
+    "Classical CV": [
+        "Canny",
+        "Sobel",
+        "HOG",
+        "ORB",
+        "HSV"
+    ],
+    "Preprocessing": "Adaptive Image Enhancement",
+    "Explainability": "Saliency Visualization"
+}
