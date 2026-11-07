@@ -65,8 +65,11 @@ def test_pipeline_construction_loads_no_models_and_models_are_loaded_once_then_r
     crop = ROOT / "predictions" / "crops" / "sample_0_crop_0.png"
     img = np.array(Image.open(crop).convert("RGB")) if crop.exists() else np.full((200, 300, 3), 120, np.uint8)
     first = pipe.process(img, enable_multimodal=False)
-    det, clf = pipe.detector._obj, pipe.classifier._obj
-    assert pipe.detector.loaded and pipe.classifier.loaded and not pipe.exterior_detector.loaded  # exterior not needed here
+    det = pipe.detector._obj
+    assert pipe.detector.loaded and not pipe.exterior_detector.loaded  # exterior not needed here
+    # The ~100 MB classifier is released right after Branch 1 uses it (UNLOAD_CLASSIFIER_AFTER_USE) ...
+    assert not pipe.classifier.loaded
     second = pipe.process(img, enable_multimodal=False)
-    assert pipe.detector._obj is det and pipe.classifier._obj is clf  # reused, not rebuilt
+    assert pipe.detector._obj is det  # ... while the detector is built once and reused,
+    assert not pipe.classifier.loaded and second["predictions"], "and the classifier transparently reloads when needed"
     assert set(first) == set(second) and "predictions" in first and "processing_time_ms" in first

@@ -37,6 +37,7 @@ from .branches.exterior import ExteriorIntelligenceBranch
 from .branches.interior_engine import InteriorEngineBranch
 from .groq_service import GroqService
 from .vision_service import VisionService, CURRENT_FRAME, REQUEST_ID
+from .config import INFERENCE_WORKERS
 
 from . import progress
 logger = logging.getLogger("autovision.orchestrator")
@@ -311,7 +312,7 @@ class MultiModelOrchestrator:
             sel_b2_img = enhancement.enhanced_image if baseline_versions["selected_for_exterior_analysis"] == "enhanced" else image_rgb
             sel_b3_img = enhancement.enhanced_image if baseline_versions["selected_for_interior_analysis"] == "enhanced" else image_rgb
 
-            with ThreadPoolExecutor(max_workers=3, thread_name_prefix="autovision-branch") as executor:
+            with ThreadPoolExecutor(max_workers=INFERENCE_WORKERS, thread_name_prefix="autovision-branch") as executor:
                 fut1 = executor.submit(contextvars.copy_context().run, self._execute_branch_1_safe, sel_b1_img, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image)
                 fut2 = executor.submit(contextvars.copy_context().run, self._execute_branch_2_safe, sel_b2_img, enable_groq_inspection, exterior_conf_threshold)
                 fut3 = executor.submit(contextvars.copy_context().run, self._execute_branch_3_safe, sel_b3_img)
@@ -361,7 +362,7 @@ class MultiModelOrchestrator:
             )
         elif images_identical:
             # Images identical: run inference once and share results (zero duplicate compute)
-            with ThreadPoolExecutor(max_workers=3, thread_name_prefix="autovision-branch") as executor:
+            with ThreadPoolExecutor(max_workers=INFERENCE_WORKERS, thread_name_prefix="autovision-branch") as executor:
                 fut1 = executor.submit(contextvars.copy_context().run, self._execute_branch_1_safe, image_rgb, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image)
                 fut2 = executor.submit(contextvars.copy_context().run, self._execute_branch_2_safe, image_rgb, enable_groq_inspection, exterior_conf_threshold)
                 fut3 = executor.submit(contextvars.copy_context().run, self._execute_branch_3_safe, image_rgb)
@@ -389,7 +390,7 @@ class MultiModelOrchestrator:
         else:
             # Full Dual Inference & Comparison (CV-only during comparison to eliminate duplicate Groq tokens)
             enhanced_image = enhancement.enhanced_image
-            with ThreadPoolExecutor(max_workers=4, thread_name_prefix="autovision-comp") as executor:
+            with ThreadPoolExecutor(max_workers=INFERENCE_WORKERS, thread_name_prefix="autovision-comp") as executor:
                 # Branch 1 Dual Inference (fast CV only, no Groq during comparison)
                 fut_b1_orig = executor.submit(contextvars.copy_context().run, self._execute_branch_1_safe, image_rgb, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image, False)
                 fut_b1_enh = executor.submit(contextvars.copy_context().run, self._execute_branch_1_safe, enhanced_image, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image, False)

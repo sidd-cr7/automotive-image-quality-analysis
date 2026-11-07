@@ -9,6 +9,7 @@ from ..config import (
     DEFAULT_DETECTION_CONF,
     CLASSIFIER_UNCERTAINTY_THRESHOLD,
     CLASSIFY_FULL_FRAME,
+    UNLOAD_CLASSIFIER_AFTER_USE,
 )
 from ..detector import VehicleDetector, DetectionResult
 from ..classifier import VehicleClassifier, ClassificationResult
@@ -208,6 +209,10 @@ class VehicleIdentificationBranch:
                 pred_entry["visual_ai_reasoning"] = ai_reasoning
 
             predictions_list.append(pred_entry)
+
+        unload = getattr(self.classifier, "unload", None)
+        if UNLOAD_CLASSIFIER_AFTER_USE and callable(unload):
+            unload()  # frees ~100 MB for the exterior model / enhancement stages that follow
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000.0
 

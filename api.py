@@ -289,6 +289,21 @@ _pipeline_lock = threading.Lock()
 _inference_gate = asyncio.Semaphore(int(os.getenv("MAX_CONCURRENT_INFERENCES", "1")))
 
 
+def _release_request_memory() -> None:
+    """Drop caches that would otherwise pin the last request's image arrays, then collect garbage."""
+    try:
+        from src.groq_service import GroqService
+        GroqService._b64_cache = (None, 0, 0, "")
+    except Exception:
+        pass
+    gc.collect()
+    try:  # Linux/glibc: hand freed heap pages back to the OS (torch/numpy otherwise keep them, inflating RSS)
+        import ctypes
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass
+
+
 def get_pipeline() -> "VehicleRecognitionPipeline":
     """Create the pipeline on first use (single-flight). The heavy models inside it load lazily too."""
     global pipeline
@@ -547,7 +562,7 @@ async def predict_vehicle(
         _progress.finish()
     response = PredictResponse(**result)
     del result, image_bytes  # do not retain the upload or raw prediction data
-    gc.collect()
+    _release_request_memory()
     return response
 
 

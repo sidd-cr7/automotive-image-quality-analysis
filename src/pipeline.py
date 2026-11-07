@@ -25,6 +25,7 @@ from .preprocessing import AdaptivePreprocessor
 from .classical_cv import ClassicalCVAnalyzer
 from .exterior_model import ExteriorComponentDetector
 from .groq_service import GroqService
+from .config import MAX_IMAGE_DIM, MAX_IMAGE_PIXELS, TORCH_THREADS
 from .vision_service import VisionService
 from .quality_assessment import ImageQualityAssessor
 from .adaptive_enhancer import AdaptiveEnhancer
@@ -56,10 +57,21 @@ class LazyModel:
         if self._obj is None:
             with self._lock:
                 if self._obj is None:
+                    try:
+                        import torch
+                        torch.set_num_threads(TORCH_THREADS)  # fewer threads -> smaller per-thread buffers
+                    except Exception:
+                        pass
                     logging.getLogger("autovision.pipeline").info("Loading %s (first use)", self._name)
                     self._obj = self._factory()
                     gc.collect()
         return self._obj
+
+    def unload(self) -> None:
+        """Drop the built model so its memory can be reclaimed; it is rebuilt on next use."""
+        with self._lock:
+            self._obj = None
+        gc.collect()
 
     def __getattr__(self, item):
         if item.startswith("_"):
@@ -179,13 +191,17 @@ class VehicleRecognitionPipeline:
 
         try:
             pil_img = Image.open(io.BytesIO(image_bytes))
-            pil_img.verify()  # Check file integrity
-            # Reopen after verify
-            pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            if pil_img.width * pil_img.height > MAX_IMAGE_PIXELS:
+                raise ValueError(f"image resolution too large ({pil_img.width}x{pil_img.height}); maximum is {MAX_IMAGE_PIXELS // 1_000_000} megapixels")
+            pil_img.draft("RGB", (MAX_IMAGE_DIM, MAX_IMAGE_DIM))  # JPEG: decode at 1/2, 1/4 or 1/8 size (saves memory)
+            pil_img = pil_img.convert("RGB")
+            if max(pil_img.size) > MAX_IMAGE_DIM:
+                pil_img.thumbnail((MAX_IMAGE_DIM, MAX_IMAGE_DIM), Image.LANCZOS)  # never process above MAX_IMAGE_DIM
         except Exception as e:
             raise ValueError(f"Failed to decode image data: {str(e)}") from e
 
         rgb_arr = np.array(pil_img, dtype=np.uint8)
+        del pil_img
         h, w = rgb_arr.shape[:2]
 
         if h < 16 or w < 16:

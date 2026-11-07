@@ -43,8 +43,8 @@ export default function UploadArea({
       alert('Please upload a valid image file (JPEG, PNG, WEBP, BMP).');
       return;
     }
-    if (file.size > 20 * 1024 * 1024) {
-      alert(`This image is ${(file.size / 1048576).toFixed(1)} MB. The maximum is 20 MB.`);
+    if (file.size > 10 * 1024 * 1024) {
+      alert(`This image is ${(file.size / 1048576).toFixed(1)} MB. The maximum is 10 MB.`);
       return;
     }
     onImageSelected(file);
@@ -85,7 +85,7 @@ export default function UploadArea({
             <p style={styles.subtitle}>Drag & drop or click to browse</p>
 
             <div style={styles.formatBadge}>
-              <span>JPEG, PNG, WEBP, BMP up to 20MB</span>
+              <span>JPEG, PNG, WEBP, BMP up to 10MB</span>
             </div>
           </div>
         ) : (

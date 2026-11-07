@@ -70,7 +70,16 @@ VISION_CACHE_TTL = float(os.getenv("VISION_CACHE_TTL", "3600"))
 GROQ_IMAGE_MAX_DIM = int(os.getenv("GROQ_IMAGE_MAX_DIM", "1024"))
 GROQ_IMAGE_JPEG_QUALITY = int(os.getenv("GROQ_IMAGE_JPEG_QUALITY", "78"))
 # Reject uploads larger than this (bytes) before decoding.
-MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(25 * 1024 * 1024)))
+MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
+# Memory safety (512 MB hosts): photos are decoded at reduced size and never processed above MAX_IMAGE_DIM px.
+# The models only look at 224-640 px inputs, so this does not reduce accuracy. Absurd resolutions are rejected.
+MAX_IMAGE_DIM = int(os.getenv("MAX_IMAGE_DIM", "1024"))
+MAX_IMAGE_PIXELS = int(os.getenv("MAX_IMAGE_PIXELS", str(50_000_000)))
+# Heavy inference jobs that may run at the same time inside one request (1 = sequential, lowest peak RAM).
+INFERENCE_WORKERS = max(1, int(os.getenv("INFERENCE_WORKERS", "1")))
+TORCH_THREADS = max(1, int(os.getenv("TORCH_THREADS", "1")))
+# Release the ~100 MB classifier right after Branch 1 uses it; it is re-mapped from disk on the next use (about 1 s).
+UNLOAD_CLASSIFIER_AFTER_USE = os.getenv("UNLOAD_CLASSIFIER_AFTER_USE", "true").lower() in ("true", "1", "yes")
 
 # Part 3: Original vs Enhanced Prediction Comparison Configuration
 ENABLE_PREDICTION_COMPARISON = os.getenv("ENABLE_PREDICTION_COMPARISON", "true").lower() in ("true", "1", "yes")

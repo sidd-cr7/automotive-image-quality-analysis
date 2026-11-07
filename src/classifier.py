@@ -1,5 +1,6 @@
 """ResNet-50 Vehicle Classifier module."""
 
+import contextlib
 import gc
 import json
 from dataclasses import dataclass, asdict
@@ -23,6 +24,14 @@ from .config import (
     IMAGENET_STD,
     DEVICE,
 )
+
+
+def _load_weights(model, state_dict) -> None:
+    """Adopt the (memory-mapped) checkpoint tensors directly (assign=True) instead of copying them into new RAM."""
+    try:
+        model.load_state_dict(state_dict, assign=True)
+    except TypeError:  # older torch without `assign`
+        model.load_state_dict(state_dict)
 
 
 def _load_checkpoint(path: str, device):
@@ -93,9 +102,16 @@ class VehicleClassifier:
             )
 
         # Build model architecture
-        self.model = models.resnet50(weights=None)
-        in_features = self.model.fc.in_features
-        self.model.fc = nn.Linear(in_features, NUM_CLASSES)
+        # Built on the "meta" device: no memory is spent on random initial weights that would be thrown away.
+        try:
+            with torch.device("meta"):
+                self.model = models.resnet50(weights=None)
+                self.model.fc = nn.Linear(self.model.fc.in_features, NUM_CLASSES)
+            self._meta_built = True
+        except Exception:
+            self.model = models.resnet50(weights=None)
+            self.model.fc = nn.Linear(self.model.fc.in_features, NUM_CLASSES)
+            self._meta_built = False
 
         # Load state dictionary
         state_dict = _load_checkpoint(str(self.model_path), self.device)
@@ -104,7 +120,7 @@ class VehicleClassifier:
         elif isinstance(state_dict, dict) and "model_state_dict" in state_dict:
             state_dict = state_dict["model_state_dict"]
 
-        self.model.load_state_dict(state_dict)
+        _load_weights(self.model, state_dict)
         del state_dict  # the checkpoint copy is no longer needed; free it before the second model loads
         self.model.to(self.device)
         self.model.eval()
@@ -114,9 +130,10 @@ class VehicleClassifier:
         self.secondary = None
         if CLASSIFIER_ENSEMBLE and Path(EFFICIENTNET_MODEL_PATH).exists():
             try:
-                eff = models.efficientnet_b0(weights=None)
-                eff.classifier[1] = nn.Linear(eff.classifier[1].in_features, NUM_CLASSES)
-                eff.load_state_dict(_load_checkpoint(str(EFFICIENTNET_MODEL_PATH), self.device))
+                with torch.device("meta") if self._meta_built else contextlib.nullcontext():
+                    eff = models.efficientnet_b0(weights=None)
+                    eff.classifier[1] = nn.Linear(eff.classifier[1].in_features, NUM_CLASSES)
+                _load_weights(eff, _load_checkpoint(str(EFFICIENTNET_MODEL_PATH), self.device))
                 self.secondary = eff.to(self.device).eval()
             except Exception as e:  # keep ResNet-50 alone if the second model cannot load
                 import logging
