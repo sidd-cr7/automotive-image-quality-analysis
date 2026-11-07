@@ -101,7 +101,7 @@ Gemini Flash  ->  Groq (key 1, then key 2)  ->  local ResNet-50 + EfficientNet-B
   Concurrent branches share one call. Failures are cached for 20 s so a down provider is not hammered.
 - **Failover:** each provider gets at most one attempt per image (Groq also fails over between its two keys, and
   waits once if both are limited for <= 15 s). Quota/rate limits, timeouts, auth and server errors put a provider on a
-  cooldown (Google's/Groq's own retry hint when given, otherwise 15 s to 10 min), and later requests skip it.
+  cooldown (Google's/Groq's own retry hint when given, otherwise 15 s for a bad response, 20 s to 30 s for server errors and timeouts, 10 min for a rejected key; a reported quota wait is capped at 1 h), and later requests skip it.
 - If every provider fails, classifier and exterior results are still returned and `identification_source` is
   `classifier_only`. `final_ai_verdict.provider_attempts` lists each provider tried and why it failed.
 - `GET /health` shows provider status (configured, cooldown, ok/failed counts), never keys. Keys are read only from
