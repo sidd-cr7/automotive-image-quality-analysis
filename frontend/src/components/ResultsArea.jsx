@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ShieldCheck,
   ChevronDown,
@@ -14,52 +14,60 @@ import {
   Sparkles
 } from 'lucide-react';
 
-export default function ResultsArea({ resultData, isLoading }) {
+export default function ResultsArea({ resultData, isLoading, analysis }) {
   const [showExtended, setShowExtended] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const startedAt = analysis?.startedAt;
+  useEffect(() => {
+    if (!isLoading || !startedAt) return undefined;
+    const tick = () => setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [isLoading, startedAt]);
 
   // ============================================================
   // 1. LOADING STATE
   // ============================================================
   if (isLoading) {
+    const stages = [
+      { key: 'upload', label: 'Uploading', done: !!analysis?.uploadDone, active: !analysis?.uploadDone, note: analysis?.uploadDone ? '' : `${analysis?.uploadPct ?? 0}%` },
+      { key: 'detection', label: 'Vehicle Detection', hint: 'includes image-quality checks' },
+      { key: 'inspection', label: 'Visual Inspection', hint: 'Gemini, then Groq, then local models' },
+      { key: 'final', label: 'Final Analysis', hint: 'verdict, specs, valuation' },
+    ].map((st) => {
+      if (st.key === 'upload') return st;
+      const done = analysis?.completed?.includes(st.key);
+      return { ...st, done: !!done, active: !done && analysis?.current === st.key };
+    });
     return (
       <div style={styles.container}>
         <div style={styles.card}>
           <div style={styles.headerRow}>
-            <span style={styles.subHeader}>MULTI-BRANCH INFERENCE</span>
+            <span style={styles.subHeader}>ANALYSIS IN PROGRESS</span>
             <span style={styles.loadingPulseTag}>
               <span style={styles.pulseDot} />
-              ANALYZING
+              {elapsed}s
             </span>
           </div>
-
           <div style={styles.loadingBody}>
-            <h3 style={styles.loadingTitle}>Processing Visual Perception</h3>
-            <p style={styles.loadingDesc}>
-              The three-branch neural pipeline is executing across vehicle identification,
-              exterior component segmentation, and Groq multimodal reasoning.
-            </p>
-
+            <h3 style={styles.loadingTitle}>Analysing your image</h3>
             <div style={styles.branchStatusList}>
-              <div style={styles.branchStatusItem}>
-                <Cpu size={16} color="var(--accent-petrol-teal)" />
-                <span style={styles.branchStatusLabel}>Branch 1: Vehicle Feature Classification</span>
-                <span style={styles.branchStatusState}>Active</span>
-              </div>
-              <div style={styles.branchStatusItem}>
-                <Eye size={16} color="var(--accent-tangerine)" />
-                <span style={styles.branchStatusLabel}>Branch 2: YOLO11n-seg Component Parsing</span>
-                <span style={styles.branchStatusState}>Active</span>
-              </div>
-              <div style={styles.branchStatusItem}>
-                <Zap size={16} color="var(--accent-petrol-teal)" />
-                <span style={styles.branchStatusLabel}>Branch 3: Groq Multimodal Vision Synthesis</span>
-                <span style={styles.branchStatusState}>Active</span>
-              </div>
+              {stages.map((st) => (
+                <div key={st.key} style={{ ...styles.branchStatusItem, opacity: st.done || st.active ? 1 : 0.55 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: st.done ? 'var(--accent-petrol-teal)' : st.active ? 'var(--accent-tangerine)' : 'transparent', border: '1.5px solid var(--text-ink-black)' }} />
+                  <span style={styles.branchStatusLabel}>
+                    {st.label}
+                    {st.hint && <span style={{ display: 'block', fontSize: '0.68rem', opacity: 0.65 }}>{st.hint}</span>}
+                  </span>
+                  <span style={styles.branchStatusState}>{st.done ? 'Done' : st.active ? (st.note || 'Running') : 'Waiting'}</span>
+                </div>
+              ))}
             </div>
-
-            <div style={styles.loadingProgressBar}>
-              <div style={styles.loadingProgressFill} />
-            </div>
+            <p style={{ ...styles.loadingDesc, marginTop: 14 }}>
+              Stages update from the server as each one finishes.
+              {elapsed >= 45 && ' This is taking longer than usual, possibly because the vision service is rate-limited. The request is still running.'}
+            </p>
           </div>
         </div>
       </div>
@@ -120,18 +128,22 @@ export default function ResultsArea({ resultData, isLoading }) {
   const specs = resultData.vehicle_specifications || {};
   const engine = specs.engine || {};
   const valuation = resultData.market_valuation || {};
-  const exterior = resultData.exterior_intelligence || {};
-  const quality = resultData.quality_assessment || {};
+  const exterior = resultData.exterior_analysis || {};
+  const quality = resultData.image_quality || {};
   const originalB1 = resultData.original_model_outputs?.branch_1_vehicle_id || {};
   const topCandidates = originalB1?.predictions?.[0]?.top5 || [];
+  const isUncertain = vehicle.is_uncertain === true;
+  const idSource = vehicle.identification_source;
+  const isGroqId = typeof idSource === 'string' && idSource.endsWith('_vision');
+  const providerName = vehicle.vision_provider ? vehicle.vision_provider.charAt(0).toUpperCase() + vehicle.vision_provider.slice(1) : 'vision';
 
   const displayMake = vehicle.make || specs.make || 'Unidentified Vehicle';
-  const displayModel = specs.variant || vehicle.model || 'Unknown Model';
+  const displayModel = vehicle.model || specs.variant || 'Unknown Model';
   const displayConfidence = vehicle.confidence !== undefined ? vehicle.confidence : null;
   const confidencePercent = displayConfidence !== null ? (displayConfidence * 100).toFixed(1) : null;
 
-  const displayType = engine.configuration || specs.body_type || 'N/A';
-  const displayDisplacement = engine.displacement || 'N/A';
+  const displayType = engine.configuration || specs.body_type || 'Unavailable';
+  const displayDisplacement = engine.displacement || 'Unavailable';
 
   // Format market valuation price
   let formattedPrice = null;
@@ -202,11 +214,18 @@ export default function ResultsArea({ resultData, isLoading }) {
         </div>
 
         {/* Brand Name & Logo Badge */}
+        {isUncertain && (
+          <span style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '0.66rem', letterSpacing: '0.14em', fontWeight: 700, background: 'var(--accent-tangerine)', color: 'var(--text-ink-black)', padding: '3px 8px', marginBottom: 6 }}>
+            {isGroqId ? `AI-IDENTIFIED (${providerName.toUpperCase()}) · UNVERIFIED` : 'UNCONFIRMED · POSSIBLE MATCH'}
+          </span>
+        )}
         <div style={styles.brandRow}>
-          <h2 style={styles.makeTitle}>{displayMake}</h2>
-          <div style={styles.brandLogoCircle}>
-            {renderBrandBadge(displayMake)}
-          </div>
+          <h2 style={styles.makeTitle}>{isUncertain ? `${displayMake}?` : displayMake}</h2>
+          {!isUncertain && (
+            <div style={styles.brandLogoCircle}>
+              {renderBrandBadge(displayMake)}
+            </div>
+          )}
         </div>
 
         {/* Confidence Section (Only rendered if model returned a score) */}
@@ -231,10 +250,27 @@ export default function ResultsArea({ resultData, isLoading }) {
           </div>
         )}
 
+        {isUncertain && (
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'var(--accent-petrol-teal)', borderLeft: '3px solid var(--accent-tangerine)', padding: '6px 10px', margin: '0 0 14px' }}>
+            {isGroqId ? `IDENTIFIED BY THE ${providerName.toUpperCase()} VISION MODEL, NOT THE CLASSIFIER. THERE IS NO CALIBRATED CONFIDENCE SCORE. TREAT IT, AND ANY SPECS OR PRICE BELOW, AS UNVERIFIED.` : 'LOW CONFIDENCE. THE MODEL IS NOT SURE. TREAT THIS IDENTIFICATION, AND ANY SPECS OR PRICE BELOW, AS UNVERIFIED.'}
+          </p>
+        )}
+
+        {isGroqId && vehicle.classifier_top1 && (
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.64rem', letterSpacing: '0.08em', color: 'var(--text-ink-muted)', margin: '0 0 14px' }}>
+            CLASSIFIER'S OWN GUESS: {vehicle.classifier_top1.toUpperCase()} ({(vehicle.classifier_confidence * 100).toFixed(1)}%)
+          </p>
+        )}
+        {vehicle.identification_note && !isUncertain && (
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.64rem', letterSpacing: '0.08em', color: 'var(--text-ink-muted)', margin: '0 0 14px' }}>
+            {vehicle.identification_note.toUpperCase()}
+          </p>
+        )}
+
         {/* Spec Metrics Row */}
         <div style={styles.metricsGrid}>
           <div style={styles.metricItem}>
-            <span style={styles.metricLabel}>Model / Trim</span>
+            <span style={styles.metricLabel}>{isUncertain ? 'Possible model' : 'Model / Trim'}</span>
             <span style={styles.metricValue}>{displayModel}</span>
           </div>
 
@@ -285,7 +321,7 @@ export default function ResultsArea({ resultData, isLoading }) {
         {formattedPrice && (
           <div style={styles.valuationBadge}>
             <DollarSign size={15} color="var(--accent-petrol-teal)" />
-            <span style={styles.valuationText}>Estimated Market Value: <strong>{formattedPrice}</strong></span>
+            <span style={styles.valuationText}>Estimated Market Value: <strong>{formattedPrice}</strong>{isUncertain ? ' (unverified: based on an uncertain identification)' : ''}</span>
           </div>
         )}
 
@@ -313,32 +349,32 @@ export default function ResultsArea({ resultData, isLoading }) {
               <div style={styles.drawerGrid}>
                 <div style={styles.drawerItem}>
                   <span style={styles.drawerKey}>Horsepower:</span>
-                  <span style={styles.drawerVal}>{engine.horsepower_hp ? `${engine.horsepower_hp} HP` : 'N/A'}</span>
+                  <span style={styles.drawerVal}>{engine.horsepower ? `${engine.horsepower} HP` : 'Unavailable'}</span>
                 </div>
                 <div style={styles.drawerItem}>
                   <span style={styles.drawerKey}>Torque:</span>
-                  <span style={styles.drawerVal}>{engine.torque_nm ? `${engine.torque_nm} Nm` : 'N/A'}</span>
+                  <span style={styles.drawerVal}>{engine.torque_nm ? `${engine.torque_nm} Nm` : 'Unavailable'}</span>
                 </div>
                 <div style={styles.drawerItem}>
                   <span style={styles.drawerKey}>Fuel:</span>
-                  <span style={styles.drawerVal}>{engine.fuel_type || 'N/A'}</span>
+                  <span style={styles.drawerVal}>{engine.fuel_type || 'Unavailable'}</span>
                 </div>
                 <div style={styles.drawerItem}>
                   <span style={styles.drawerKey}>Drivetrain:</span>
-                  <span style={styles.drawerVal}>{specs.transmission?.drivetrain || 'N/A'}</span>
+                  <span style={styles.drawerVal}>{specs.drivetrain || 'Unavailable'}</span>
                 </div>
               </div>
             </div>
 
             {/* Exterior Intelligence (YOLO11n-seg) */}
-            {exterior.components_detected && (
+            {exterior.detected_classes && exterior.detected_classes.length > 0 && (
               <div style={styles.drawerSection}>
                 <div style={styles.drawerSectionHeader}>
                   <Layers size={14} color="var(--accent-tangerine)" />
                   <span style={styles.drawerSectionTitle}>EXTERIOR COMPONENTS (YOLO11n-seg)</span>
                 </div>
                 <div style={styles.tagWrap}>
-                  {exterior.components_detected.slice(0, 8).map((comp, i) => (
+                  {exterior.detected_classes.slice(0, 12).map((comp, i) => (
                     <span key={i} style={styles.componentTag}>
                       {typeof comp === 'string' ? comp : comp.class_name || comp.name || `Part ${i}`}
                     </span>
@@ -348,10 +384,10 @@ export default function ResultsArea({ resultData, isLoading }) {
             )}
 
             {/* Image Quality Score */}
-            {quality.overall_quality_score !== undefined && (
+            {typeof quality.overall_score === 'number' && (
               <div style={styles.qualityRow}>
                 <span style={styles.qualityLabel}>Input Image Quality Score:</span>
-                <span style={styles.qualityScoreVal}>{quality.overall_quality_score.toFixed(1)} / 100</span>
+                <span style={styles.qualityScoreVal}>{quality.overall_score.toFixed(1)} / 100</span>
               </div>
             )}
           </div>

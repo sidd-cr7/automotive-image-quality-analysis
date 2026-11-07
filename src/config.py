@@ -41,14 +41,36 @@ IMAGE_SIZE = (224, 224)
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 CLASSIFIER_UNCERTAINTY_THRESHOLD = float(os.getenv("CLASSIFIER_UNCERTAINTY_THRESHOLD", "0.40"))
+# The classifiers were trained on WHOLE frames resized to 224x224, not tight vehicle crops.
+# Classifying the YOLO crop drops accuracy from ~33% to ~8% top-1 on Stanford Cars; classify the full frame.
+CLASSIFY_FULL_FRAME = os.getenv("CLASSIFY_FULL_FRAME", "true").lower() in ("true", "1", "yes")
+# Average ResNet-50 and EfficientNet-B0 probabilities (both trained on the same 196 classes).
+EFFICIENTNET_MODEL_PATH = Path(os.getenv("EFFICIENTNET_MODEL_PATH", str(MODELS_DIR / "efficientnet_b0_best.pth")))
+CLASSIFIER_ENSEMBLE = os.getenv("CLASSIFIER_ENSEMBLE", "true").lower() in ("true", "1", "yes")
 
 # Groq API configurations
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_API_KEY_BACKUP = os.getenv("GROQ_API_KEY_BACKUP", os.getenv("GROQ_BACKUP_API_KEY", ""))
-GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "llama-3.2-11b-vision-preview")
-GROQ_VERDICT_MODEL = os.getenv("GROQ_VERDICT_MODEL", "llama-3.3-70b-versatile")
+GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "qwen/qwen3.8-27b")
+GROQ_VERDICT_MODEL = os.getenv("GROQ_VERDICT_MODEL", "qwen/qwen3.8-27b")
 GROQ_TIMEOUT = float(os.getenv("GROQ_TIMEOUT", "20.0"))
 GROQ_MAX_RETRIES = int(os.getenv("GROQ_MAX_RETRIES", "2"))
+# Vision providers (tried in VISION_PROVIDER_ORDER; the local classifier is the final fallback).
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+# Fast Flash-tier alias that follows Google's current model (measured 2.7-3.9 s). Note: "gemini-2.5-flash" is
+# retired for new keys and "gemini-flash-latest" timed out (>60 s) in testing.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
+GEMINI_TIMEOUT = float(os.getenv("GEMINI_TIMEOUT", "25"))
+VISION_PROVIDER_ORDER = os.getenv("VISION_PROVIDER_ORDER", "gemini,groq")
+VISION_CACHE_SIZE = int(os.getenv("VISION_CACHE_SIZE", "64"))
+VISION_CACHE_TTL = float(os.getenv("VISION_CACHE_TTL", "3600"))
+
+# Image optimisation for Groq vision payloads (longest edge in px, JPEG quality 1-100).
+# This only affects images sent to Groq; YOLO / classifier inputs are untouched.
+GROQ_IMAGE_MAX_DIM = int(os.getenv("GROQ_IMAGE_MAX_DIM", "1024"))
+GROQ_IMAGE_JPEG_QUALITY = int(os.getenv("GROQ_IMAGE_JPEG_QUALITY", "78"))
+# Reject uploads larger than this (bytes) before decoding.
+MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(25 * 1024 * 1024)))
 
 # Part 3: Original vs Enhanced Prediction Comparison Configuration
 ENABLE_PREDICTION_COMPARISON = os.getenv("ENABLE_PREDICTION_COMPARISON", "true").lower() in ("true", "1", "yes")

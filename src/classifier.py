@@ -14,6 +14,8 @@ from PIL import Image
 from .config import (
     CLASSIFICATION_MODEL_PATH,
     CLASSES_PATH,
+    EFFICIENTNET_MODEL_PATH,
+    CLASSIFIER_ENSEMBLE,
     NUM_CLASSES,
     IMAGE_SIZE,
     IMAGENET_MEAN,
@@ -97,6 +99,18 @@ class VehicleClassifier:
         self.model.to(self.device)
         self.model.eval()
 
+        # Optional second model (EfficientNet-B0) averaged with ResNet-50 at the probability level.
+        self.secondary = None
+        if CLASSIFIER_ENSEMBLE and Path(EFFICIENTNET_MODEL_PATH).exists():
+            try:
+                eff = models.efficientnet_b0(weights=None)
+                eff.classifier[1] = nn.Linear(eff.classifier[1].in_features, NUM_CLASSES)
+                eff.load_state_dict(torch.load(str(EFFICIENTNET_MODEL_PATH), map_location=self.device, weights_only=False))
+                self.secondary = eff.to(self.device).eval()
+            except Exception as e:  # keep ResNet-50 alone if the second model cannot load
+                import logging
+                logging.getLogger("autovision.classifier").warning(f"EfficientNet-B0 ensemble disabled: {e}")
+
         # Input preprocessing pipeline
         self.transform = transforms.Compose([
             transforms.Resize(IMAGE_SIZE),
@@ -150,6 +164,8 @@ class VehicleClassifier:
                 logits = self.model(tensor)
 
             probs = torch.softmax(logits, dim=1)[0]
+            if self.secondary is not None:
+                probs = (probs + torch.softmax(self.secondary(tensor), dim=1)[0]) / 2
             top_probs, top_indices = torch.topk(probs, min(top_k, NUM_CLASSES))
 
         predictions: List[PredictionItem] = []

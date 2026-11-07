@@ -10,10 +10,12 @@ Integrates:
 """
 
 import asyncio
+import contextvars
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import logging
 import time
+import uuid
 from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
@@ -34,7 +36,9 @@ from .branches.vehicle_id import VehicleIdentificationBranch
 from .branches.exterior import ExteriorIntelligenceBranch
 from .branches.interior_engine import InteriorEngineBranch
 from .groq_service import GroqService
+from .vision_service import VisionService, CURRENT_FRAME, REQUEST_ID
 
+from . import progress
 logger = logging.getLogger("autovision.orchestrator")
 
 
@@ -56,7 +60,7 @@ class MultiModelOrchestrator:
         prediction_comparator: Optional[PredictionComparator] = None,
         vehicle_intelligence_service: Optional[VehicleIntelligenceService] = None,
     ):
-        self.groq_service = groq_service or GroqService()
+        self.groq_service = groq_service or VisionService()
         self.branch_1 = branch_1 or VehicleIdentificationBranch(groq_service=self.groq_service)
         self.branch_2 = branch_2 or ExteriorIntelligenceBranch(groq_service=self.groq_service)
         self.branch_3 = branch_3 or InteriorEngineBranch(groq_service=self.groq_service)
@@ -129,6 +133,7 @@ class MultiModelOrchestrator:
         apply_preprocessing: bool,
         include_classical_cv: bool,
         fallback_to_full_image: bool,
+        enable_visual_reasoning: bool = True,
     ) -> Dict[str, Any]:
         """Safely execute Branch 1 without unhandled crash."""
         try:
@@ -138,6 +143,7 @@ class MultiModelOrchestrator:
                 apply_preprocessing=apply_preprocessing,
                 include_classical_cv=include_classical_cv,
                 fallback_to_full_image=fallback_to_full_image,
+                enable_visual_reasoning=enable_visual_reasoning,
             )
         except Exception as e:
             logger.error(f"Branch 1 unhandled exception: {e}")
@@ -257,6 +263,9 @@ class MultiModelOrchestrator:
         """
         start_time = time.perf_counter()
         h, w = image_rgb.shape[:2]
+        progress.begin("detection")
+        _frame_token = CURRENT_FRAME.set(image_rgb)  # single combined vision request shares this frame
+        _request_token = REQUEST_ID.set(uuid.uuid4().hex)
 
         do_comparison = ENABLE_PREDICTION_COMPARISON if enable_prediction_comparison is None else enable_prediction_comparison
         do_groq_comp = COMPARE_GROQ_VERSIONS if compare_groq_versions is None else compare_groq_versions
@@ -303,14 +312,15 @@ class MultiModelOrchestrator:
             sel_b3_img = enhancement.enhanced_image if baseline_versions["selected_for_interior_analysis"] == "enhanced" else image_rgb
 
             with ThreadPoolExecutor(max_workers=3, thread_name_prefix="autovision-branch") as executor:
-                fut1 = executor.submit(self._execute_branch_1_safe, sel_b1_img, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image)
-                fut2 = executor.submit(self._execute_branch_2_safe, sel_b2_img, enable_groq_inspection, exterior_conf_threshold)
-                fut3 = executor.submit(self._execute_branch_3_safe, sel_b3_img)
+                fut1 = executor.submit(contextvars.copy_context().run, self._execute_branch_1_safe, sel_b1_img, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image)
+                fut2 = executor.submit(contextvars.copy_context().run, self._execute_branch_2_safe, sel_b2_img, enable_groq_inspection, exterior_conf_threshold)
+                fut3 = executor.submit(contextvars.copy_context().run, self._execute_branch_3_safe, sel_b3_img)
 
                 b1_selected = fut1.result()
                 b2_selected = fut2.result()
                 b3_selected = fut3.result()
 
+            progress.end("detection")
             b1_orig, b1_enh = b1_selected, b1_selected
             b2_orig, b2_enh = b2_selected, b2_selected
             b3_orig, b3_enh = b3_selected, b3_selected
@@ -352,9 +362,9 @@ class MultiModelOrchestrator:
         elif images_identical:
             # Images identical: run inference once and share results (zero duplicate compute)
             with ThreadPoolExecutor(max_workers=3, thread_name_prefix="autovision-branch") as executor:
-                fut1 = executor.submit(self._execute_branch_1_safe, image_rgb, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image)
-                fut2 = executor.submit(self._execute_branch_2_safe, image_rgb, enable_groq_inspection, exterior_conf_threshold)
-                fut3 = executor.submit(self._execute_branch_3_safe, image_rgb)
+                fut1 = executor.submit(contextvars.copy_context().run, self._execute_branch_1_safe, image_rgb, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image)
+                fut2 = executor.submit(contextvars.copy_context().run, self._execute_branch_2_safe, image_rgb, enable_groq_inspection, exterior_conf_threshold)
+                fut3 = executor.submit(contextvars.copy_context().run, self._execute_branch_3_safe, image_rgb)
 
                 b1_res = fut1.result()
                 b2_res = fut2.result()
@@ -377,37 +387,29 @@ class MultiModelOrchestrator:
                 comparison_mode="fast_identical",
             )
         else:
-            # Full Dual Inference & Comparison
+            # Full Dual Inference & Comparison (CV-only during comparison to eliminate duplicate Groq tokens)
             enhanced_image = enhancement.enhanced_image
-            with ThreadPoolExecutor(max_workers=5, thread_name_prefix="autovision-comp") as executor:
-                # Branch 1 Dual Inference
-                fut_b1_orig = executor.submit(self._execute_branch_1_safe, image_rgb, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image)
-                fut_b1_enh = executor.submit(self._execute_branch_1_safe, enhanced_image, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image)
+            with ThreadPoolExecutor(max_workers=4, thread_name_prefix="autovision-comp") as executor:
+                # Branch 1 Dual Inference (fast CV only, no Groq during comparison)
+                fut_b1_orig = executor.submit(contextvars.copy_context().run, self._execute_branch_1_safe, image_rgb, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image, False)
+                fut_b1_enh = executor.submit(contextvars.copy_context().run, self._execute_branch_1_safe, enhanced_image, conf_threshold, apply_preprocessing, include_classical_cv, fallback_to_full_image, False)
 
-                # Branch 2 Dual Inference
-                fut_b2_orig = executor.submit(self._execute_branch_2_safe, image_rgb, enable_groq_inspection, exterior_conf_threshold)
-                fut_b2_enh = executor.submit(self._execute_branch_2_safe, enhanced_image, enable_groq_inspection, exterior_conf_threshold)
-
-                # Branch 3 Inference (Conditional dual Groq calls)
-                if do_groq_comp:
-                    fut_b3_orig = executor.submit(self._execute_branch_3_safe, image_rgb)
-                    fut_b3_enh = executor.submit(self._execute_branch_3_safe, enhanced_image)
-                else:
-                    target_b3_img = enhanced_image if baseline_versions["selected_for_interior_analysis"] == "enhanced" else image_rgb
-                    fut_b3_single = executor.submit(self._execute_branch_3_safe, target_b3_img)
+                # Branch 2 Dual Inference (fast YOLO11n-seg, no Groq during comparison)
+                fut_b2_orig = executor.submit(contextvars.copy_context().run, self._execute_branch_2_safe, image_rgb, False, exterior_conf_threshold)
+                fut_b2_enh = executor.submit(contextvars.copy_context().run, self._execute_branch_2_safe, enhanced_image, False, exterior_conf_threshold)
 
                 b1_orig = fut_b1_orig.result()
                 b1_enh = fut_b1_enh.result()
                 b2_orig = fut_b2_orig.result()
                 b2_enh = fut_b2_enh.result()
 
-                if do_groq_comp:
-                    b3_orig = fut_b3_orig.result()
-                    b3_enh = fut_b3_enh.result()
-                else:
-                    b3_single = fut_b3_single.result()
-                    b3_orig = b3_single
-                    b3_enh = b3_single
+            progress.end("detection")
+            progress.begin("inspection")
+            # Branch 3 executes once on the selected baseline image
+            target_b3_img = enhanced_image if baseline_versions["selected_for_interior_analysis"] == "enhanced" else image_rgb
+            b3_single = self._execute_branch_3_safe(target_b3_img)
+            b3_orig = b3_single
+            b3_enh = b3_single
 
             # Execute Part 3 Prediction Comparison
             comp_report = self.prediction_comparator.compare_all(
@@ -428,6 +430,46 @@ class MultiModelOrchestrator:
             b2_selected = b2_enh if comp_report.exterior_analysis.selected_version == "enhanced" else b2_orig
             b3_selected = b3_enh if comp_report.interior_engine_analysis.selected_version == "enhanced" else b3_orig
 
+            # Now run Groq Visual AI reasoning ONCE on the selected prediction ONLY if uncertain
+            target_b1_img = enhanced_image if comp_report.vehicle_identification.selected_version == "enhanced" else image_rgb
+            if (b1_selected.get("status") == "uncertain" or any(p.get("is_uncertain") for p in b1_selected.get("predictions", []))) and self.groq_service and self.groq_service.is_available:
+                for pred in b1_selected.get("predictions", []):
+                    if pred.get("is_uncertain"):
+                        try:
+                            crop = target_b1_img
+                            if "box" in pred and len(pred["box"]) == 4:
+                                x1, y1, x2, y2 = [int(c) for c in pred["box"]]
+                                if x2 > x1 and y2 > y1:
+                                    crop = target_b1_img[y1:y2, x1:x2]
+                            ai_reasoning = self.groq_service.reason_vehicle_identity(
+                                image=crop,
+                                top1_prediction=pred,
+                                top5_predictions=pred.get("top5", []),
+                            )
+                            pred["visual_ai_reasoning"] = ai_reasoning
+                            b1_selected.setdefault("evidence", {})["visual_ai_reasoning"] = ai_reasoning
+                        except Exception as e:
+                            logger.warning(f"Single visual reasoning failed: {e}")
+
+            # Now run Groq exterior inspection ONCE on the selected b2 image if enabled
+            if enable_groq_inspection and self.groq_service and self.groq_service.is_available:
+                target_b2_img = enhanced_image if comp_report.exterior_analysis.selected_version == "enhanced" else image_rgb
+                try:
+                    cv_classes = b2_selected.get("predictions", {}).get("detected_classes", [])
+                    insp = self.groq_service.inspect_exterior(
+                        image=target_b2_img,
+                        cv_detected_classes=cv_classes,
+                    )
+                    b2_selected.setdefault("evidence", {})["groq_inspection_performed"] = True
+                    b2_selected["evidence"]["inspection_notes"] = insp.get("inspection_notes")
+                    b2_selected["evidence"]["missed_cues_noted"] = insp.get("missed_cues", [])
+                    if insp.get("possible_modifications"):
+                        b2_selected.setdefault("predictions", {})["possible_modifications"] = insp.get("possible_modifications")
+                except Exception as e:
+                    logger.warning(f"Single exterior inspection failed: {e}")
+
+        progress.end("inspection")
+        progress.begin("final")
         # 3. Final Groq Verdict Stage
         verdict_image = enhancement.enhanced_image if comp_report.interior_engine_analysis.selected_version == "enhanced" else image_rgb
         verdict = self._execute_verdict_safe(
@@ -478,6 +520,9 @@ class MultiModelOrchestrator:
                 "assumptions": ["Market valuation unavailable due to transient service error."],
             }
 
+        progress.end("final")
+        CURRENT_FRAME.reset(_frame_token)
+        REQUEST_ID.reset(_request_token)
         elapsed_total_ms = (time.perf_counter() - start_time) * 1000.0
 
         # Update image versions record to reflect intelligent selection
@@ -559,6 +604,43 @@ class MultiModelOrchestrator:
     # -------------------------------------------------------------------------
     # Consolidated Intelligence Synthesis
     # -------------------------------------------------------------------------
+    @staticmethod
+    def _vehicle_identity_block(final_make, final_model, final_year, generation, primary_b1, b1_conf, verdict):
+        """Build the `vehicle` block and say who produced the identification.
+
+        The classifier's confidence is only reported for the classifier's own answer. If a vision
+        provider (Gemini/Groq) changed make/model, that identification has no calibrated
+        confidence, so `confidence` is None and the result is flagged uncertain.
+        """
+        norm = lambda v: str(v or "").strip().lower()
+        provider = verdict.get("verdict_provider")
+        provider = {"primary": "groq", "backup": "groq"}.get(provider, provider)  # legacy key labels
+        used = verdict.get("verdict_status") in ("verified", "provider_assessed") and bool(provider)
+        clf_make, clf_model = primary_b1.get("make"), primary_b1.get("model")
+        changed = used and (norm(final_make) != norm(clf_make) or norm(final_model) != norm(clf_model))
+        if changed:
+            source, confidence, uncertain = f"{provider}_vision", None, True
+            note = f"Identified by the {provider.title()} vision model. It has no calibrated confidence score and is not verified."
+        elif used:
+            source, confidence, uncertain = f"classifier_confirmed_by_{provider}", round(b1_conf, 4), primary_b1.get("is_uncertain", False)
+            note = f"Classifier result; the {provider.title()} vision model reached the same make and model."
+        else:
+            source, confidence, uncertain = "classifier_only", round(b1_conf, 4), primary_b1.get("is_uncertain", False)
+            note = "Local classifier result only. No vision provider was available for this image."
+        return {
+            "make": final_make,
+            "model": final_model,
+            "estimated_year": final_year,
+            "generation": generation,
+            "confidence": confidence,
+            "classifier_confidence": round(b1_conf, 4),
+            "classifier_top1": f"{clf_make} {clf_model}".strip() if clf_make else None,
+            "identification_source": source,
+            "identification_note": note,
+            "vision_provider": provider if used else None,
+            "is_uncertain": uncertain,
+        }
+
     @staticmethod
     def _assemble_consolidated_report(
         b1: Dict[str, Any],
@@ -662,14 +744,9 @@ class MultiModelOrchestrator:
             "enhanced_predictions": enhanced_predictions or {},
 
             # 1. Core Consolidated Vehicle Identification (Selected)
-            "vehicle": {
-                "make": final_make,
-                "model": final_model,
-                "estimated_year": final_year,
-                "generation": generation,
-                "confidence": round(b1_conf, 4),
-                "is_uncertain": primary_b1.get("is_uncertain", False),
-            },
+            "vehicle": MultiModelOrchestrator._vehicle_identity_block(
+                final_make, final_model, final_year, generation, primary_b1, b1_conf, verdict
+            ),
 
             # Part 4: Vehicle Specifications & Current Market Price Intelligence
             "vehicle_specifications": vehicle_specifications or {},
@@ -720,6 +797,9 @@ class MultiModelOrchestrator:
                 "confirmed_facts": verdict.get("confirmed_facts", []),
                 "visual_inferences": verdict.get("visual_inferences", []),
                 "corrections_made": verdict.get("corrections_made", []),
+                "provider": verdict.get("verdict_provider"),
+                "provider_cached": verdict.get("provider_cached", False),
+                "provider_attempts": verdict.get("provider_attempts", []),
             },
 
             # 7. Missing or Unavailable Information

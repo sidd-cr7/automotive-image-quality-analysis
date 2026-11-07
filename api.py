@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException, status
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -159,7 +160,13 @@ class VehicleIdentityModel(BaseModel):
     model: str
     estimated_year: Optional[int] = None
     generation: Optional[str] = None
-    confidence: float
+    # None when the Groq vision model changed the identification (it has no calibrated confidence).
+    confidence: Optional[float] = None
+    classifier_confidence: Optional[float] = None
+    classifier_top1: Optional[str] = None
+    identification_source: str = "classifier_only"  # classifier_only | classifier_confirmed_by_<provider> | <provider>_vision
+    identification_note: Optional[str] = None
+    vision_provider: Optional[str] = None
     is_uncertain: bool = False
 
 
@@ -212,6 +219,10 @@ class FinalAIVerdictModel(BaseModel):
     confirmed_facts: List[str]
     visual_inferences: List[str]
     corrections_made: List[Dict[str, Any]]
+    # Which vision provider produced the analysis (None = local models only) and what was tried.
+    provider: Optional[str] = None
+    provider_cached: bool = False
+    provider_attempts: List[Dict[str, Any]] = []
 
 
 class PredictResponse(BaseModel):
@@ -290,11 +301,19 @@ app = FastAPI(
 )
 
 # Enable CORS
+# Production serves the UI from this same origin, so no CORS is needed there. For the Vite dev server
+# (or another trusted frontend) set CORS_ORIGINS="https://a.example,https://b.example".
+_cors_origins = [
+    o.strip() for o in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000",
+    ).split(",") if o.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=_cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -331,8 +350,19 @@ def health_check() -> HealthResponse:
             "groq_primary_configured": groq_primary,
             "groq_backup_configured": groq_backup,
             "groq_vision_model": pipe.groq_service.vision_model if pipe.groq_service else None,
+            "vision_providers": pipe.groq_service.status() if hasattr(pipe.groq_service, "status") else None,
         },
     )
+
+
+@app.get("/progress/{job_id}", include_in_schema=False)
+async def get_progress(job_id: str):
+    """Real stage progress for an in-flight /predict request (see src/progress.py)."""
+    from src import progress as _progress
+    state = _progress.get(job_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Unknown job id.")
+    return state
 
 
 @app.post(
@@ -391,6 +421,10 @@ async def predict_vehicle(
     currency: Optional[str] = Query(
         None, description="Optional target currency code (INR, USD, EUR, GBP)"
     ),
+    job_id: Optional[str] = Query(
+        None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$",
+        description="Optional client-generated id for polling GET /progress/{job_id}",
+    ),
 ) -> PredictResponse:
     """
     Accepts an uploaded vehicle image and executes:
@@ -425,6 +459,13 @@ async def predict_vehicle(
             detail=f"Could not read uploaded file: {str(e)}",
         )
 
+    from src.config import MAX_UPLOAD_BYTES
+    if len(image_bytes) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Image is too large ({len(image_bytes) / 1048576:.1f} MB). Maximum is {MAX_UPLOAD_BYTES // 1048576} MB.",
+        )
+
     if not image_bytes or len(image_bytes) < 16:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -433,6 +474,9 @@ async def predict_vehicle(
 
     # 3. Execute Pipeline
     pipe = get_pipeline()
+    if job_id:
+        from src import progress as _progress
+        _progress.start(job_id)
     try:
         result = await pipe.process_async(
             image_input=image_bytes,
@@ -456,7 +500,7 @@ async def predict_vehicle(
     except ValueError as val_err:
         raise HTTPException(
             status_code=422,
-            detail=f"Image validation error: {str(val_err)}",
+            detail="Image validation error: the file could not be decoded as a valid image (JPEG, PNG, WEBP or BMP).",
         )
     except Exception as exc:
         raise HTTPException(
@@ -464,6 +508,8 @@ async def predict_vehicle(
             detail=f"Internal inference failure: {str(exc)}",
         )
 
+    if job_id:
+        _progress.finish()
     return PredictResponse(**result)
 
 

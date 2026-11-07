@@ -62,3 +62,18 @@ Thumbs.db
 *.swp
 *.swo
 *.log
+
+# Datasets, archives and local debug artefacts (never commit)
+*.zip
+datasets/
+dataset/
+StanfordCars*/
+stanford_cars/
+cars_train/
+cars_test/
+/*.png
+/*.jpg
+/*.jpeg
+vite.log
+*.local
+.claude/

@@ -53,7 +53,7 @@ export default function InfoModals({ activeTab, onClose, historyItems }) {
                     <div key={i} style={styles.historyCard}>
                       <div style={styles.historyHeader}>
                         <span style={styles.historyMake}>{item.make} {item.model}</span>
-                        <span style={styles.historyConf}>{(item.confidence * 100).toFixed(1)}%</span>
+                        <span style={styles.historyConf}>{item.confidence == null ? 'AI-identified' : `${(item.confidence * 100).toFixed(1)}%`}{item.uncertain ? ' (uncertain)' : ''}</span>
                       </div>
                       <span style={styles.historyTimestamp}>{item.timestamp}</span>
                     </div>

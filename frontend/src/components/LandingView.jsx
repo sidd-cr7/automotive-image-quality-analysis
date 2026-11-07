@@ -1,510 +1,332 @@
 import React from 'react';
-import { ArrowUpRight, Cpu, Eye, ShieldCheck, Zap, Layers, Sparkles } from 'lucide-react';
-import SurrealCollage from './SurrealCollage';
+import { ArrowUpRight } from 'lucide-react';
+import '../landing.css';
+
+const ART = '/surreal_hero_artwork.png';
+const W = 1024;
+const H = 576;
+/* Higher-resolution engine region of the approved artwork (source 1200x900). */
+const ENG = { src: '/surreal_art_pure.png', sw: 1200, sh: 900, x: 458, y: 286, w: 322, h: 208 };
+
+/* Crops a region (in source pixels) out of the approved hero artwork. */
+function Crop({ x, y, w, h, className = '', children, src = ART, sw = W, sh = H, label }) {
+  return (
+    <div
+      className={`ei-crop ${className}`}
+      style={{
+        aspectRatio: `${w} / ${h}`,
+        backgroundImage: `url(${src})`,
+        backgroundSize: `${(sw / w) * 100}% ${(sh / h) * 100}%`,
+        backgroundPosition: `${(x / (sw - w)) * 100}% ${(y / (sh - h)) * 100}%`,
+      }}
+      role={label ? 'img' : undefined}
+      aria-label={label}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SectionHead({ num, kicker, title, children }) {
+  return (
+    <header className="ei-head">
+      <span className="ei-bignum" aria-hidden="true">{num}</span>
+      <div className="ei-head-text">
+        <span className="ei-mono ei-kicker">{kicker}</span>
+        <h2 className="ei-h2">{title}</h2>
+        <p className="ei-lead">{children}</p>
+      </div>
+    </header>
+  );
+}
 
 export default function LandingView({ onNavigateToDetect }) {
   return (
-    <div style={styles.container}>
-      {/* ============================================================
-          HERO SECTION (Full viewport editorial experience)
-          ============================================================ */}
-      <section style={styles.heroSection}>
-        {/* Top Meta Bar */}
-        <div style={styles.topMeta}>
-          <span style={styles.metaLabel}>
-            AUTOMOTIVE COMPUTER VISION <span style={styles.metaDash}>—</span>
-          </span>
-        </div>
+    <div className="landing-container ei-landing">
+      {/* ---------- NAV ---------- */}
+      <header className="landing-top-nav">
+        <span className="brand-spec-tag">FIG. 01 / SYSTEM OVERVIEW</span>
+        <span className="meta-category">
+          AUTOMOTIVE COMPUTER VISION <span className="meta-dash">—</span> FORENSIC METROLOGY
+        </span>
+        <button onClick={onNavigateToDetect} className="btn-editorial-teal btn-compact" title="Open Detection Workspace">
+          <span>DETECT WORKSPACE</span>
+          <ArrowUpRight size={15} strokeWidth={2.4} />
+        </button>
+      </header>
 
-        {/* Big Editorial Title with interactive presence */}
-        <div style={styles.titleWrapper}>
-          <h1 style={styles.titleLine1}>ENGINE</h1>
-          <h1 style={styles.titleLine2}>INTELLIGENCE</h1>
-        </div>
-
-        {/* Subtitle Triad */}
-        <div style={styles.subHeader}>
-          <span style={styles.subItem}>DETECT</span>
-          <span style={styles.subDivider}>/</span>
-          <span style={styles.subItem}>IDENTIFY</span>
-          <span style={styles.subDivider}>/</span>
-          <span style={styles.subItem}>ANALYZE</span>
-        </div>
-
-        {/* Expansive Surrealist Artwork Hero Feature */}
-        <div style={styles.artworkHeroContainer}>
-          <SurrealCollage mode="hero" />
-        </div>
-
-        {/* Editorial Hero Intro & Prominent CTA to Detection Workspace */}
-        <div style={styles.heroCtaRow}>
-          <p style={styles.heroDescription}>
-            A synthesis of classical aesthetic form and multi-model neural perception.
-            Autonomous vehicle identification, exterior segmentation, interior inspection,
-            and engine intelligence operating across three synchronized deep vision branches.
-          </p>
-
-          <button
-            onClick={onNavigateToDetect}
-            className="btn-editorial-teal interactive-target"
-            style={styles.launchBtn}
-          >
-            <span>ENTER DETECTION WORKSPACE</span>
-            <ArrowUpRight size={18} strokeWidth={2.4} />
-          </button>
-        </div>
-      </section>
-
-      {/* ============================================================
-          EDITORIAL SECTION 1: THREE-BRANCH NEURAL ARCHITECTURE
-          ============================================================ */}
-      <section style={styles.manifestoSection}>
-        <div style={styles.sectionHeader}>
-          <span style={styles.sectionTag}>FIG. 02 — ARCHITECTURAL DEPLOYMENT</span>
-          <h2 style={styles.sectionTitle}>The Three-Branch Neural Perception Engine</h2>
-          <p style={styles.sectionSubtitle}>
-            Engineered to overcome the limitations of monolithic models by deploying
-            domain-specialized architectures in parallel.
-          </p>
-        </div>
-
-        <div style={styles.branchesGrid}>
-          {/* Branch 1 Card */}
-          <div style={styles.branchCard}>
-            <div style={styles.branchCardHeader}>
-              <div style={styles.branchBadgeTeal}>BRANCH 01</div>
-              <Cpu size={20} color="var(--accent-petrol-teal)" />
-            </div>
-            <h3 style={styles.branchTitle}>Vehicle Identification</h3>
-            <p style={styles.branchDesc}>
-              YOLOv8 vehicle bounding-box detection fused with ResNet-50 deep feature
-              extraction. Predicts make, model, and generation with top-5 candidate rankings
-              and predictive confidence scoring.
-            </p>
-            <div style={styles.branchMeta}>
-              <span>YOLOv8 + ResNet-50</span>
-              <span style={styles.metaDot}>•</span>
-              <span>1000+ Vehicle Classes</span>
-            </div>
+      {/* ---------- HERO ---------- */}
+      <section className="landing-hero-section">
+        <div className="hero-header-block">
+          <div className="hero-title-wrapper">
+            <h1 className="hero-title-line">ENGINE</h1>
+            <h1 className="hero-title-line">INTELLIGENCE</h1>
           </div>
-
-          {/* Branch 2 Card */}
-          <div style={styles.branchCard}>
-            <div style={styles.branchCardHeader}>
-              <div style={styles.branchBadgeTangerine}>BRANCH 02</div>
-              <Eye size={20} color="var(--accent-tangerine)" />
-            </div>
-            <h3 style={styles.branchTitle}>Exterior Intelligence</h3>
-            <p style={styles.branchDesc}>
-              Custom-trained YOLO11n-seg instance segmentation across 23 exterior component
-              classes (bumpers, hood, fenders, grilles, lights). Segments boundaries and flags
-              aftermarket modifications.
-            </p>
-            <div style={styles.branchMeta}>
-              <span>YOLO11n-seg</span>
-              <span style={styles.metaDot}>•</span>
-              <span>23 Component Classes</span>
-            </div>
+          <div className="hero-subtitle-triad">
+            <span className="triad-item">DETECT</span><span className="triad-sep">/</span>
+            <span className="triad-item">IDENTIFY</span><span className="triad-sep">/</span>
+            <span className="triad-item">ANALYZE</span>
           </div>
-
-          {/* Branch 3 Card */}
-          <div style={styles.branchCard}>
-            <div style={styles.branchCardHeader}>
-              <div style={styles.branchBadgeTeal}>BRANCH 03</div>
-              <Zap size={20} color="var(--accent-petrol-teal)" />
-            </div>
-            <h3 style={styles.branchTitle}>Interior & Engine Reasoning</h3>
-            <p style={styles.branchDesc}>
-              Groq Llama-Vision multimodal cognition with automated primary-to-backup API
-              failover. Diagnoses engine bays, manifolds, intake assemblies, steering wheels,
-              and cabin cockpit ergonomics.
+        </div>
+        <div className="hero-artwork-frame">
+          <img
+            src="/surreal_hero_artwork.jpg"
+            alt="Classical sculpture wearing an engine visor beneath a red sun, mountains and a winding road"
+            className="hero-artwork-img"
+            loading="eager"
+          />
+        </div>
+        <div className="hero-editorial-footer">
+          <div className="hero-manifesto-text">
+            <p className="hero-lead">
+              Vehicle classification, 23-class exterior segmentation and engine-bay reasoning,
+              run as three synchronized vision branches on every photograph you upload.
             </p>
-            <div style={styles.branchMeta}>
-              <span>Dual Groq Vision</span>
-              <span style={styles.metaDot}>•</span>
-              <span>Sub-second Latency</span>
-            </div>
+          </div>
+          <div className="hero-cta-action">
+            <button onClick={onNavigateToDetect} className="btn-editorial-teal btn-large">
+              <span>ENTER DETECTION WORKSPACE</span>
+              <ArrowUpRight size={18} strokeWidth={2.4} />
+            </button>
           </div>
         </div>
       </section>
 
-      {/* ============================================================
-          EDITORIAL SECTION 2: ADAPTIVE CV RESTORATION & SPECIFICATIONS
-          ============================================================ */}
-      <section style={styles.specificationsSection}>
-        <div style={styles.twoColumnGrid}>
-          {/* Left Column: Image Quality & Enhancement */}
-          <div style={styles.specCard}>
-            <div style={styles.specHeaderRow}>
-              <Layers size={22} color="var(--accent-petrol-teal)" />
-              <span style={styles.specTag}>PART 2 & 3 PIPELINE</span>
-            </div>
-            <h3 style={styles.specCardTitle}>Intelligent Quality Assessment & Adaptive CV</h3>
-            <p style={styles.specCardBody}>
-              Every frame undergoes rigorous defect quantification before inference.
-              Detects underexposure, overexposure, motion blur, sensor noise, and specular
-              glare. Automatically applies CLAHE contrast optimization, unsharp masking,
-              and comparative entropy selection between original and enhanced images.
-            </p>
-            <div style={styles.pillList}>
-              <span style={styles.techPill}>CLAHE Lighting Balance</span>
-              <span style={styles.techPill}>Laplacian Blur Detection</span>
-              <span style={styles.techPill}>Dual-Image Routing</span>
-            </div>
-          </div>
+      {/* ---------- 02 THREE BRANCHES ---------- */}
+      <section className="ei-section">
+        <SectionHead num="02" kicker="FIG. 02 — THREE-BRANCH PERCEPTION ENGINE" title={<>One photograph,<br /><em>three readings.</em></>}>
+          A single model cannot find the car, trace its panels and diagnose the engine bay.
+          Three specialised branches run in parallel and merge into one report.
+        </SectionHead>
 
-          {/* Right Column: Specifications & Market Pricing */}
-          <div style={styles.specCard}>
-            <div style={styles.specHeaderRow}>
-              <ShieldCheck size={22} color="var(--accent-tangerine)" />
-              <span style={styles.specTag}>PART 4 INTELLIGENCE</span>
-            </div>
-            <h3 style={styles.specCardTitle}>Verified Specifications & Current Valuation</h3>
-            <p style={styles.specCardBody}>
-              Transforms raw model predictions into actionable automotive intelligence.
-              Retrieves authentic manufacturer engine configurations (displacement, horsepower,
-              torque, cylinders, transmission) and computes market valuations across regional
-              currencies.
+        {/* Branch 01 — vehicle id: big photo left, bbox annotations */}
+        <article className="ei-branch ei-b1">
+          <div className="ei-b1-visual">
+            <Crop x={285} y={425} w={360} h={151} className="ei-b1-photo">
+              <span className="ei-bbox" style={{ left: '31%', top: '15%', width: '35%', height: '36%' }}>
+                <i className="ei-tag ei-tag-teal">VEHICLE</i>
+                <b className="ei-corner tl" /><b className="ei-corner tr" /><b className="ei-corner bl" /><b className="ei-corner br" />
+              </span>
+              <span className="ei-cross" style={{ left: '48.5%', top: '33%' }} />
+            </Crop>
+            <div className="ei-ruler"><span>x₀</span><i /><span className="ei-mono">LOCALISE → CROP → CLASSIFY</span><i /><span>x₁</span></div>
+            <p className="ei-caption ei-mono">FIG. 02.1 — BOUNDING-BOX LOCALISATION</p>
+          </div>
+          <div className="ei-b1-copy">
+            <span className="ei-branchnum" aria-hidden="true">01</span>
+            <span className="ei-mono ei-pill ei-pill-teal">BRANCH 01 · VEHICLE IDENTIFICATION</span>
+            <h3 className="ei-h3">Find the car. <em>Name it.</em></h3>
+            <p className="ei-prose">
+              A YOLOv8 detector isolates the vehicle from the background. The crop goes to a ResNet-50
+              classifier trained on the Stanford Cars taxonomy, which returns a ranked top-5 list
+              rather than a single guess.
             </p>
-            <div style={styles.pillList}>
-              <span style={styles.techPill}>Verified Engine Specs</span>
-              <span style={styles.techPill}>Market Valuation Engine</span>
-              <span style={styles.techPill}>Regional Currencies</span>
+            <dl className="ei-spec">
+              <div><dt>Detector</dt><dd>YOLOv8</dd></div>
+              <div><dt>Classifier</dt><dd>ResNet-50</dd></div>
+              <div><dt>Classes</dt><dd>196</dd></div>
+              <div><dt>Output</dt><dd>Top-5 ranking</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        {/* Branch 02 — exterior: centred schematic with leader labels */}
+        <article className="ei-branch ei-b2">
+          <div className="ei-b2-top">
+            <span className="ei-branchnum ei-branchnum-teal" aria-hidden="true">02</span>
+            <div>
+              <span className="ei-mono ei-pill ei-pill-tangerine">BRANCH 02 · EXTERIOR INTELLIGENCE</span>
+              <h3 className="ei-h3">Every panel, <em>traced.</em></h3>
             </div>
+            <p className="ei-prose">
+              A YOLO11n-seg network outlines 23 exterior components pixel by pixel: bumpers, lamps,
+              glass, doors, wheels. Each mask can be inspected on its own.
+            </p>
+          </div>
+          <div className="ei-b2-stage">
+            <ul className="ei-legend ei-legend-l">
+              <li><b>01</b> Hood &amp; bonnet</li>
+              <li><b>02</b> Front fascia</li>
+              <li><b>03</b> Headlamps</li>
+            </ul>
+            <div className="ei-b2-figure">
+              <svg viewBox="0 0 580 230" role="img" aria-label="Segmentation schematic of a coupe body">
+                <defs>
+                  <pattern id="ei-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M20 0H0V20" fill="none" stroke="rgba(32,32,30,.08)" strokeWidth=".8" />
+                  </pattern>
+                </defs>
+                <rect width="580" height="230" fill="url(#ei-grid)" />
+                <path d="M60 170C65 155 80 145 110 140C140 135 190 132 230 95C270 58 330 55 420 65C470 72 500 100 530 130C550 145 560 158 555 175L530 180C515 150 470 150 455 180L190 180C175 150 130 150 115 180Z" fill="rgba(32,32,30,.05)" stroke="#20201E" strokeWidth="2" />
+                <path d="M62 168C65 155 80 145 110 140C140 135 190 132 225 105L205 165Z" fill="rgba(23,107,112,.32)" stroke="#176B70" strokeWidth="1.6" />
+                <path d="M230 98L415 68C455 76 480 100 495 130L220 133Z" fill="rgba(242,139,69,.28)" stroke="#F28B45" strokeWidth="1.6" />
+                <path d="M425 70C475 78 505 105 530 132C550 145 558 158 554 175L525 178C510 152 475 152 460 178L415 178Z" fill="rgba(23,107,112,.2)" stroke="#176B70" strokeWidth="1.4" />
+                <circle cx="152" cy="178" r="32" fill="#DED5C5" stroke="#20201E" strokeWidth="2" />
+                <circle cx="152" cy="178" r="17" fill="#151513" stroke="#F28B45" strokeWidth="1.5" />
+                <circle cx="488" cy="178" r="32" fill="#DED5C5" stroke="#20201E" strokeWidth="2" />
+                <circle cx="488" cy="178" r="17" fill="#151513" stroke="#F28B45" strokeWidth="1.5" />
+                <g fontFamily="Space Mono, monospace" fontSize="9" fontWeight="700">
+                  <polyline points="130,145 110,40 70,40" stroke="#176B70" fill="none" /><circle cx="130" cy="145" r="3" fill="#176B70" /><text x="12" y="36" fill="#176B70">MASK 01 HOOD</text>
+                  <polyline points="330,90 330,25 390,25" stroke="#F28B45" fill="none" /><circle cx="330" cy="90" r="3" fill="#F28B45" /><text x="394" y="29" fill="#20201E">MASK 05 GLASS</text>
+                  <polyline points="488,178 488,222 430,222" stroke="#20201E" fill="none" /><text x="320" y="225" fill="#20201E">MASK 04 WHEEL</text>
+                </g>
+              </svg>
+            </div>
+            <ul className="ei-legend ei-legend-r">
+              <li><b>04</b> Wheels &amp; arches</li>
+              <li><b>05</b> Greenhouse</li>
+              <li><b>…</b> 18 more classes</li>
+            </ul>
+          </div>
+          <p className="ei-caption ei-mono">FIG. 02.2 — ILLUSTRATIVE SCHEMATIC · NOT A MODEL OUTPUT</p>
+        </article>
+
+        {/* Branch 03 — engine: full-bleed charcoal band, huge engine image */}
+        <article className="ei-branch ei-b3">
+          <div className="ei-b3-copy">
+            <span className="ei-branchnum ei-branchnum-dark" aria-hidden="true">03</span>
+            <span className="ei-mono ei-pill ei-pill-light">BRANCH 03 · INTERIOR &amp; ENGINE REASONING</span>
+            <h3 className="ei-h3 ei-h3-light">Read the <em>machine.</em></h3>
+            <p className="ei-prose ei-prose-light">
+              Engine bays and cockpits do not fit a fixed class list. Branch 03 sends a downscaled
+              frame to a Qwen vision model on Groq, with a second instance on hot standby, and returns
+              a written mechanical diagnosis.
+            </p>
+            <dl className="ei-spec ei-spec-light">
+              <div><dt>Model</dt><dd>Qwen vision (Groq)</dd></div>
+              <div><dt>Failover</dt><dd>Secondary instance</dd></div>
+              <div><dt>Input</dt><dd>512 px frame</dd></div>
+            </dl>
+          </div>
+          <div className="ei-b3-visual">
+            <Crop {...ENG} className="ei-b3-engine" label="Red engine block collage" />
+            <span className="ei-callout" style={{ left: '8%', top: '12%' }}><i /> VALVE COVER</span>
+            <span className="ei-callout" style={{ right: '4%', top: '62%' }}><i /> EXHAUST RUNNERS</span>
+            <span className="ei-callout" style={{ left: '14%', bottom: '8%' }}><i /> ACCESSORY DRIVE</span>
+          </div>
+        </article>
+      </section>
+
+      {/* ---------- 03 QUALITY ---------- */}
+      <section className="ei-section">
+        <SectionHead num="03" kicker="FIG. 03 — QUALITY ASSESSMENT" title={<>Fix the photo<br /><em>before</em> reading it.</>}>
+          Field photos are blurred, over-exposed or buried in shadow. Every frame is measured first,
+          then repaired only if it needs it.
+        </SectionHead>
+
+        <div className="ei-q">
+          <figure className="ei-q-a">
+            <div className="ei-split">
+              <Crop {...ENG} className="ei-before ei-blurred" />
+              <Crop {...ENG} className="ei-after" />
+              <span className="ei-split-line" />
+              <span className="ei-mono ei-split-l">BEFORE · BLURRED</span>
+              <span className="ei-mono ei-split-r">AFTER · SHARPENED</span>
+            </div>
+            <figcaption className="ei-mono">FIG. 03.1 — ILLUSTRATIVE COMPARISON · BLUR SIMULATED WITH A CSS FILTER</figcaption>
+          </figure>
+
+          <figure className="ei-q-b">
+            <div className="ei-split">
+              <Crop x={285} y={425} w={360} h={151} className="ei-before ei-dark" />
+              <Crop x={285} y={425} w={360} h={151} className="ei-after ei-clahe" />
+              <span className="ei-split-line" />
+              <span className="ei-mono ei-split-l">BEFORE · UNDEREXPOSED</span>
+              <span className="ei-mono ei-split-r">AFTER · CLAHE</span>
+            </div>
+            <figcaption className="ei-mono">FIG. 03.2 — ILLUSTRATIVE COMPARISON · DARKENING SIMULATED WITH A CSS FILTER</figcaption>
+          </figure>
+
+          <div className="ei-q-c">
+            <div className="ei-hist">
+            <svg viewBox="0 0 220 90" aria-label="Illustrative luminance histograms">
+              <g fill="#20201E" opacity=".75">
+                {[4, 9, 18, 34, 52, 60, 44, 26, 12, 6, 3, 2].map((v, i) => <rect key={i} x={4 + i * 8} y={80 - v} width="6" height={v} />)}
+              </g>
+              <g fill="#176B70">
+                {[12, 22, 30, 36, 40, 42, 40, 36, 30, 22, 14, 8].map((v, i) => <rect key={i} x={116 + i * 8} y={80 - v} width="6" height={v} />)}
+              </g>
+              <line x1="0" y1="81" x2="220" y2="81" stroke="#20201E" strokeWidth=".8" />
+              <text x="4" y="10" fontFamily="Space Mono, monospace" fontSize="7" fill="#20201E">RAW</text>
+              <text x="116" y="10" fontFamily="Space Mono, monospace" fontSize="7" fill="#176B70">EQUALISED</text>
+            </svg>
+            <p className="ei-mono">ILLUSTRATIVE ONLY · NOT MEASURED DATA</p>
+            </div>
+            <ol className="ei-steps">
+              <li><b>01</b> Measure blur (Laplacian variance); below 100 triggers sharpening</li>
+              <li><b>02</b> Measure exposure and dynamic range</li>
+              <li><b>03</b> Enhance, then keep whichever frame carries more Shannon entropy</li>
+            </ol>
           </div>
         </div>
       </section>
 
-      {/* ============================================================
-          FINAL CALL TO ACTION BANNER
-          ============================================================ */}
-      <section style={styles.bottomCtaSection}>
-        <div style={styles.bottomCtaCard}>
-          <span style={styles.bottomCtaTag}>READY FOR INFERENCE</span>
-          <h2 style={styles.bottomCtaTitle}>Experience Multi-Branch Automotive Perception</h2>
-          <p style={styles.bottomCtaText}>
-            Test your engine bays, exterior profiles, and vehicle photographs against
-            the live computer vision backend.
-          </p>
-          <button
-            onClick={onNavigateToDetect}
-            className="btn-editorial-teal interactive-target"
-            style={styles.bottomCtaBtn}
-          >
-            <span>LAUNCH DETECTION LABORATORY</span>
-            <ArrowUpRight size={18} strokeWidth={2.4} />
+      {/* ---------- 04 SPECS & VALUATION ---------- */}
+      <section className="ei-section">
+        <SectionHead num="04" kicker="FIG. 04 — SPECIFICATIONS & MARKET VALUATION" title={<>From a name<br />to a <em>dossier.</em></>}>
+          A confirmed make and model unlocks factory specifications and an indicative resale range.
+          When the model or year is unknown, those fields stay empty. Nothing is invented.
+        </SectionHead>
+
+        <div className="ei-spec-layout">
+          <div className="ei-spec-engine">
+            <div className="ei-spec-sun" />
+            <Crop {...ENG} label="Engine illustration" />
+            <span className="ei-measure ei-measure-h"><i /><b className="ei-mono">LENGTH</b><i /></span>
+            <span className="ei-measure ei-measure-v"><i /><b className="ei-mono">HEIGHT</b><i /></span>
+            <p className="ei-caption ei-mono">FIG. 04.1 — POWERTRAIN · ARTWORK</p>
+          </div>
+
+          <div className="ei-ledger">
+            <h3 className="ei-h3">Powertrain &amp; architecture</h3>
+            {[
+              ['Displacement', 'Litres, cylinder count'],
+              ['Induction', 'Aspirated or forced'],
+              ['Valve train', 'Cams, valves per cylinder'],
+              ['Transmission', 'Type and gear count'],
+              ['Drive', 'FWD · RWD · AWD'],
+              ['Body', 'Coupe · sedan · hatch · wagon'],
+            ].map(([k, v], i) => (
+              <div className="ei-ledger-row" key={k}>
+                <span className="ei-mono ei-ledger-i">{String(i + 1).padStart(2, '0')}</span>
+                <span className="ei-ledger-k">{k}</span>
+                <span className="ei-ledger-v">{v}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="ei-val">
+            <span className="ei-mono ei-kicker">SECONDARY-MARKET RANGE</span>
+            <div className="ei-val-scale">
+              <span><b className="ei-mono">LOW</b>Fair condition</span>
+              <span className="ei-val-mid"><b className="ei-mono">MEDIAN</b>Typical wear</span>
+              <span><b className="ei-mono">HIGH</b>Pristine</span>
+            </div>
+            <p className="ei-prose">
+              Depreciation is modelled from vehicle age and a 12,000 km/year baseline, using listings
+              from CarWale, CarDekho, Parkers and Kelley Blue Book. Currencies: ₹, $, £.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- 05 CTA ---------- */}
+      <section className="ei-cta">
+        <div className="ei-cta-art" aria-hidden="true">
+          <span className="ei-cta-disc" />
+          <Crop x={400} y={170} w={250} h={330} className="ei-cta-face" />
+          <Crop x={0} y={460} w={290} h={116} className="ei-cta-mtn" />
+        </div>
+        <div className="ei-cta-copy">
+          <span className="ei-mono ei-cta-kicker">05 — BEGIN</span>
+          <h2 className="ei-cta-title">Upload a car.<br /><em>Read the machine.</em></h2>
+          <p className="ei-cta-text">Exterior, engine bay or cockpit. One photograph is enough.</p>
+          <button onClick={onNavigateToDetect} className="ei-cta-btn">
+            <span>LAUNCH DETECTION WORKSPACE</span>
+            <ArrowUpRight size={20} strokeWidth={2.4} />
           </button>
         </div>
       </section>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '80px',
-    paddingBottom: '80px',
-  },
-  heroSection: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    position: 'relative',
-    paddingTop: '8px',
-  },
-  topMeta: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    width: '100%',
-    paddingBottom: '8px',
-  },
-  metaLabel: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.74rem',
-    letterSpacing: '0.24em',
-    color: 'var(--text-ink-black)',
-    fontWeight: '700',
-    opacity: 0.88,
-  },
-  metaDash: {
-    color: 'var(--accent-petrol-teal)',
-    fontWeight: '700',
-  },
-  titleWrapper: {
-    lineHeight: 0.88,
-    userSelect: 'none',
-  },
-  titleLine1: {
-    fontFamily: 'var(--font-editorial)',
-    fontSize: 'clamp(3.8rem, 8.2vw, 7.8rem)',
-    fontStyle: 'italic',
-    fontWeight: '700',
-    letterSpacing: '-0.025em',
-    color: 'var(--text-ink-black)',
-    margin: 0,
-    textTransform: 'uppercase',
-  },
-  titleLine2: {
-    fontFamily: 'var(--font-editorial)',
-    fontSize: 'clamp(3.8rem, 8.2vw, 7.8rem)',
-    fontStyle: 'italic',
-    fontWeight: '700',
-    letterSpacing: '-0.025em',
-    color: 'var(--text-ink-black)',
-    margin: 0,
-    textTransform: 'uppercase',
-  },
-  subHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-    marginTop: '16px',
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.76rem',
-    letterSpacing: '0.28em',
-    color: 'var(--text-ink-black)',
-    opacity: 0.85,
-    fontWeight: '600',
-  },
-  subItem: {
-    letterSpacing: '0.24em',
-  },
-  subDivider: {
-    color: 'var(--accent-petrol-teal)',
-    opacity: 0.7,
-  },
-  artworkHeroContainer: {
-    width: '100%',
-    position: 'relative',
-    margin: '24px 0 32px 0',
-  },
-  heroCtaRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '40px',
-    backgroundColor: 'rgba(222, 213, 197, 0.45)',
-    border: '1px solid var(--border-subtle)',
-    padding: '24px 32px',
-    borderRadius: 'var(--radius-lg)',
-    flexWrap: 'wrap',
-  },
-  heroDescription: {
-    flex: '1 1 450px',
-    fontFamily: 'var(--font-sans)',
-    fontSize: '1.02rem',
-    lineHeight: 1.6,
-    color: 'var(--text-ink-muted)',
-    margin: 0,
-  },
-  launchBtn: {
-    flexShrink: 0,
-    fontSize: '0.96rem',
-    padding: '14px 28px',
-  },
-  manifestoSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '36px',
-  },
-  sectionHeader: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  sectionTag: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.72rem',
-    letterSpacing: '0.2em',
-    color: 'var(--accent-petrol-teal)',
-    fontWeight: '700',
-  },
-  sectionTitle: {
-    fontFamily: 'var(--font-editorial)',
-    fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
-    fontWeight: '700',
-    color: 'var(--text-ink-black)',
-    letterSpacing: '-0.02em',
-    margin: 0,
-  },
-  sectionSubtitle: {
-    fontFamily: 'var(--font-sans)',
-    fontSize: '1rem',
-    color: 'var(--text-ink-muted)',
-    maxWidth: '700px',
-    lineHeight: 1.5,
-  },
-  branchesGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '24px',
-  },
-  branchCard: {
-    backgroundColor: 'rgba(222, 213, 197, 0.35)',
-    border: '1px solid var(--border-subtle)',
-    borderRadius: 'var(--radius-lg)',
-    padding: '28px 24px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '14px',
-    transition: 'transform 0.2s ease, border-color 0.2s ease',
-  },
-  branchCardHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  branchBadgeTeal: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.68rem',
-    fontWeight: '700',
-    letterSpacing: '0.12em',
-    padding: '4px 10px',
-    borderRadius: 'var(--radius-full)',
-    backgroundColor: 'var(--accent-petrol-teal-subtle)',
-    color: 'var(--accent-petrol-teal)',
-    border: '1px solid var(--accent-petrol-teal-border)',
-  },
-  branchBadgeTangerine: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.68rem',
-    fontWeight: '700',
-    letterSpacing: '0.12em',
-    padding: '4px 10px',
-    borderRadius: 'var(--radius-full)',
-    backgroundColor: 'var(--accent-tangerine-subtle)',
-    color: 'var(--accent-tangerine)',
-    border: '1px solid var(--accent-tangerine-border)',
-  },
-  branchTitle: {
-    fontFamily: 'var(--font-editorial)',
-    fontSize: '1.65rem',
-    fontWeight: '700',
-    color: 'var(--text-ink-black)',
-    margin: 0,
-  },
-  branchDesc: {
-    fontFamily: 'var(--font-sans)',
-    fontSize: '0.88rem',
-    lineHeight: 1.55,
-    color: 'var(--text-ink-muted)',
-    margin: 0,
-    flex: 1,
-  },
-  branchMeta: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.72rem',
-    color: 'var(--text-ink-faint)',
-    borderTop: '1px solid var(--border-subtle)',
-    paddingTop: '12px',
-    marginTop: '6px',
-  },
-  metaDot: {
-    color: 'var(--accent-petrol-teal)',
-  },
-  specificationsSection: {
-    width: '100%',
-  },
-  twoColumnGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-    gap: '24px',
-  },
-  specCard: {
-    backgroundColor: 'rgba(222, 213, 197, 0.45)',
-    border: '1px solid var(--border-subtle)',
-    borderRadius: 'var(--radius-lg)',
-    padding: '32px 28px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  specHeaderRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  specTag: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.72rem',
-    fontWeight: '700',
-    letterSpacing: '0.16em',
-    color: 'var(--text-ink-muted)',
-  },
-  specCardTitle: {
-    fontFamily: 'var(--font-editorial)',
-    fontSize: '1.75rem',
-    fontWeight: '700',
-    color: 'var(--text-ink-black)',
-    margin: 0,
-  },
-  specCardBody: {
-    fontFamily: 'var(--font-sans)',
-    fontSize: '0.92rem',
-    lineHeight: 1.6,
-    color: 'var(--text-ink-muted)',
-    margin: 0,
-  },
-  pillList: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-    marginTop: '8px',
-  },
-  techPill: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.72rem',
-    padding: '4px 10px',
-    borderRadius: 'var(--radius-full)',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    border: '1px solid var(--border-subtle)',
-    color: 'var(--text-ink-black)',
-  },
-  bottomCtaSection: {
-    width: '100%',
-  },
-  bottomCtaCard: {
-    backgroundColor: 'var(--bg-charcoal)',
-    color: 'var(--text-light-bright)',
-    padding: '52px 48px',
-    borderRadius: 'var(--radius-xl)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
-    gap: '18px',
-    position: 'relative',
-    overflow: 'hidden',
-    boxShadow: '0 24px 48px rgba(21, 21, 19, 0.35)',
-  },
-  bottomCtaTag: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.74rem',
-    letterSpacing: '0.25em',
-    color: 'var(--accent-tangerine)',
-    fontWeight: '700',
-  },
-  bottomCtaTitle: {
-    fontFamily: 'var(--font-editorial)',
-    fontSize: 'clamp(2rem, 3.8vw, 3rem)',
-    fontWeight: '700',
-    margin: 0,
-  },
-  bottomCtaText: {
-    fontFamily: 'var(--font-sans)',
-    fontSize: '1rem',
-    color: 'var(--text-light-muted)',
-    maxWidth: '560px',
-    margin: '0 0 12px 0',
-  },
-  bottomCtaBtn: {
-    fontSize: '0.96rem',
-    padding: '14px 32px',
-  },
-};

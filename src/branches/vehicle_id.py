@@ -8,6 +8,7 @@ import numpy as np
 from ..config import (
     DEFAULT_DETECTION_CONF,
     CLASSIFIER_UNCERTAINTY_THRESHOLD,
+    CLASSIFY_FULL_FRAME,
 )
 from ..detector import VehicleDetector, DetectionResult
 from ..classifier import VehicleClassifier, ClassificationResult
@@ -43,6 +44,26 @@ class VehicleIdentificationBranch:
         self.groq_service = groq_service or GroqService()
         self.uncertainty_threshold = uncertainty_threshold
 
+    @staticmethod
+    def _classification_input(image_rgb: np.ndarray, det: Any, idx: int, crop: np.ndarray) -> np.ndarray:
+        """Pick the pixels the classifier sees.
+
+        The checkpoints were trained on whole frames, so tight crops hurt accuracy badly.
+        The primary vehicle (idx 0) is classified from the full, unmodified frame. Any further
+        vehicles use a 2x context crop around their box, the closest in-distribution view
+        (not separately evaluated). CLASSIFY_FULL_FRAME=false restores the old crop behaviour.
+        """
+        if not CLASSIFY_FULL_FRAME:
+            return crop
+        if idx == 0:
+            return image_rgb
+        h, w = image_rgb.shape[:2]
+        x1, y1, x2, y2 = [float(c) for c in det.box]
+        cx, cy, bw, bh = (x1 + x2) / 2, (y1 + y2) / 2, (x2 - x1) * 2.0, (y2 - y1) * 2.0
+        nx1, ny1 = max(0, int(cx - bw / 2)), max(0, int(cy - bh / 2))
+        nx2, ny2 = min(w, int(cx + bw / 2)), min(h, int(cy + bh / 2))
+        return image_rgb[ny1:ny2, nx1:nx2] if nx2 > nx1 and ny2 > ny1 else crop
+
     def analyze(
         self,
         image_rgb: np.ndarray,
@@ -50,6 +71,7 @@ class VehicleIdentificationBranch:
         apply_preprocessing: bool = True,
         include_classical_cv: bool = True,
         fallback_to_full_image: bool = True,
+        enable_visual_reasoning: bool = True,
     ) -> Dict[str, Any]:
         """
         Execute Branch 1 analysis synchronously.
@@ -127,7 +149,9 @@ class VehicleIdentificationBranch:
 
             # 4. Deep Learning Classification (ResNet-50)
             try:
-                clf_result = self.classifier.predict(classified_crop, top_k=5)
+                clf_result = self.classifier.predict(
+                    self._classification_input(image_rgb, det, idx, classified_crop), top_k=5
+                )
                 clf_dict = clf_result.to_dict()
             except Exception as clf_err:
                 errors.append(f"ResNet50 classification failed for vehicle {idx}: {clf_err}")
@@ -140,7 +164,7 @@ class VehicleIdentificationBranch:
 
             # 5. Visual AI Reasoning Fallback if Uncertain
             ai_reasoning = None
-            if is_uncertain and self.groq_service and self.groq_service.is_available:
+            if enable_visual_reasoning and is_uncertain and self.groq_service and self.groq_service.is_available:
                 try:
                     ai_reasoning = self.groq_service.reason_vehicle_identity(
                         image=classified_crop,

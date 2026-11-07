@@ -15,7 +15,7 @@
     "supported_regions": {
       "India": {
         "currency": "INR",
-        "currency_symbol": "₹",
+        "currency_symbol": "\u20b9",
         "source_name": "CarWale / CarDekho Indicative Secondary Market Index (India)",
         "source_url": "https://www.carwale.com/used/",
         "standard_annual_mileage_km": 12000,
@@ -33,7 +33,7 @@
       },
       "UK": {
         "currency": "GBP",
-        "currency_symbol": "£",
+        "currency_symbol": "\u00a3",
         "source_name": "AutoTrader UK / Parkers Used Valuation Guide",
         "source_url": "https://www.autotrader.co.uk/",
         "standard_annual_mileage_km": 16000,
@@ -42,7 +42,7 @@
       },
       "Europe": {
         "currency": "EUR",
-        "currency_symbol": "€",
+        "currency_symbol": "\u20ac",
         "source_name": "Mobile.de / AutoScout24 Market Index",
         "source_url": "https://www.autoscout24.com/",
         "standard_annual_mileage_km": 15000,
@@ -55,13 +55,28 @@
     {
       "make": "BMW",
       "model": "3 Series Sedan",
-      "aliases": ["3 Series", "BMW 3 Series", "320d", "328i", "330i", "3 Series Sedan"],
+      "aliases": [
+        "3 Series",
+        "BMW 3 Series",
+        "320d",
+        "328i",
+        "330i",
+        "3 Series Sedan"
+      ],
       "body_type": "Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "6th Gen (F30)",
-          "years": [2012, 2013, 2014, 2015, 2016, 2017, 2018],
+          "years": [
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018
+          ],
           "default_variant": "320d / 328i Luxury Line",
           "engine": {
             "displacement": "2.0L (1997 cc)",
@@ -85,7 +100,15 @@
         },
         {
           "generation": "5th Gen (E90)",
-          "years": [2005, 2006, 2007, 2008, 2009, 2010, 2011],
+          "years": [
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011
+          ],
           "default_variant": "320i / 325i Sedan",
           "engine": {
             "displacement": "2.5L (2497 cc)",
@@ -109,7 +132,16 @@
         },
         {
           "generation": "7th Gen (G20)",
-          "years": [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "years": [
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
           "default_variant": "330i M Sport / 320d",
           "engine": {
             "displacement": "2.0L (1998 cc)",
@@ -136,13 +168,27 @@
     {
       "make": "BMW",
       "model": "5 Series Sedan",
-      "aliases": ["5 Series", "BMW 5 Series", "520d", "530i", "530d"],
+      "aliases": [
+        "5 Series",
+        "BMW 5 Series",
+        "520d",
+        "530i",
+        "530d"
+      ],
       "body_type": "Executive Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "6th Gen (F10)",
-          "years": [2010, 2011, 2012, 2013, 2014, 2015, 2016],
+          "years": [
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016
+          ],
           "default_variant": "520d Luxury Line",
           "engine": {
             "displacement": "2.0L (1995 cc)",
@@ -166,7 +212,18 @@
         },
         {
           "generation": "7th Gen (G30)",
-          "years": [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "years": [
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
           "default_variant": "530i M Sport",
           "engine": {
             "displacement": "2.0L (1998 cc)",
@@ -193,13 +250,26 @@
     {
       "make": "BMW",
       "model": "M3 Coupe",
-      "aliases": ["M3", "BMW M3", "M3 Sedan", "M3 Convertible"],
+      "aliases": [
+        "M3",
+        "BMW M3",
+        "M3 Sedan",
+        "M3 Convertible"
+      ],
       "body_type": "Coupe",
       "seating_capacity": 4,
       "generations": [
         {
           "generation": "4th Gen (E92)",
-          "years": [2007, 2008, 2009, 2010, 2011, 2012, 2013],
+          "years": [
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013
+          ],
           "default_variant": "M3 Base Coupe",
           "engine": {
             "displacement": "4.0L (3999 cc)",
@@ -226,13 +296,26 @@
     {
       "make": "Audi",
       "model": "A4 Sedan",
-      "aliases": ["A4", "Audi A4", "A4 Avant"],
+      "aliases": [
+        "A4",
+        "Audi A4",
+        "A4 Avant"
+      ],
       "body_type": "Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "8th Gen (B8)",
-          "years": [2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015],
+          "years": [
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015
+          ],
           "default_variant": "2.0 TDI / 2.0 TFSI Premium Plus",
           "engine": {
             "displacement": "2.0L (1968 cc)",
@@ -256,7 +339,19 @@
         },
         {
           "generation": "9th Gen (B9)",
-          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "years": [
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
           "default_variant": "40 TFSI Technology",
           "engine": {
             "displacement": "2.0L (1984 cc)",
@@ -283,13 +378,27 @@
     {
       "make": "Audi",
       "model": "R8 Coupe",
-      "aliases": ["R8", "Audi R8", "R8 Spyder"],
+      "aliases": [
+        "R8",
+        "Audi R8",
+        "R8 Spyder"
+      ],
       "body_type": "Supercar / Coupe",
       "seating_capacity": 2,
       "generations": [
         {
           "generation": "1st Gen (Typ 42)",
-          "years": [2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015],
+          "years": [
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015
+          ],
           "default_variant": "4.2 FSI quattro / 5.2 V10",
           "engine": {
             "displacement": "4.2L (4163 cc)",
@@ -316,13 +425,28 @@
     {
       "make": "Mercedes-Benz",
       "model": "C-Class Sedan",
-      "aliases": ["C-Class", "Mercedes C-Class", "C200", "C220d", "C300"],
+      "aliases": [
+        "C-Class",
+        "Mercedes C-Class",
+        "C200",
+        "C220d",
+        "C300"
+      ],
       "body_type": "Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "4th Gen (W205)",
-          "years": [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021],
+          "years": [
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021
+          ],
           "default_variant": "C220d Avantgarde / C200",
           "engine": {
             "displacement": "2.0L (1950 cc)",
@@ -346,7 +470,15 @@
         },
         {
           "generation": "3rd Gen (W204)",
-          "years": [2007, 2008, 2009, 2010, 2011, 2012, 2013],
+          "years": [
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013
+          ],
           "default_variant": "C220 CDI / C200 Kompressor",
           "engine": {
             "displacement": "2.1L (2143 cc)",
@@ -373,13 +505,23 @@
     {
       "make": "Honda",
       "model": "Civic",
-      "aliases": ["Civic", "Honda Civic Sedan", "Civic Coupe"],
+      "aliases": [
+        "Civic",
+        "Honda Civic Sedan",
+        "Civic Coupe"
+      ],
       "body_type": "Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "9th Gen",
-          "years": [2011, 2012, 2013, 2014, 2015],
+          "years": [
+            2011,
+            2012,
+            2013,
+            2014,
+            2015
+          ],
           "default_variant": "1.8 EX / VTi-L",
           "engine": {
             "displacement": "1.8L (1798 cc)",
@@ -403,7 +545,14 @@
         },
         {
           "generation": "10th Gen",
-          "years": [2016, 2017, 2018, 2019, 2020, 2021],
+          "years": [
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021
+          ],
           "default_variant": "ZX 1.8 i-VTEC CVT / 1.5L Turbo",
           "engine": {
             "displacement": "1.8L (1799 cc)",
@@ -430,13 +579,22 @@
     {
       "make": "Honda",
       "model": "Accord",
-      "aliases": ["Accord", "Honda Accord Sedan"],
+      "aliases": [
+        "Accord",
+        "Honda Accord Sedan"
+      ],
       "body_type": "Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "9th Gen",
-          "years": [2013, 2014, 2015, 2016, 2017],
+          "years": [
+            2013,
+            2014,
+            2015,
+            2016,
+            2017
+          ],
           "default_variant": "2.4L i-VTEC / 2.0L Hybrid",
           "engine": {
             "displacement": "2.4L (2356 cc)",
@@ -460,7 +618,13 @@
         },
         {
           "generation": "8th Gen",
-          "years": [2008, 2009, 2010, 2011, 2012],
+          "years": [
+            2008,
+            2009,
+            2010,
+            2011,
+            2012
+          ],
           "default_variant": "2.4 Elegance / 3.5 V6",
           "engine": {
             "displacement": "2.4L (2354 cc)",
@@ -487,13 +651,25 @@
     {
       "make": "Honda",
       "model": "City",
-      "aliases": ["City", "Honda City", "City Sedan"],
+      "aliases": [
+        "City",
+        "Honda City",
+        "City Sedan"
+      ],
       "body_type": "Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "5th Gen",
-          "years": [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "years": [
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
           "default_variant": "ZX 1.5 i-VTEC",
           "engine": {
             "displacement": "1.5L (1498 cc)",
@@ -517,7 +693,14 @@
         },
         {
           "generation": "4th Gen",
-          "years": [2014, 2015, 2016, 2017, 2018, 2019],
+          "years": [
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019
+          ],
           "default_variant": "VX 1.5 i-VTEC",
           "engine": {
             "displacement": "1.5L (1497 cc)",
@@ -544,13 +727,26 @@
     {
       "make": "Toyota",
       "model": "Camry Sedan",
-      "aliases": ["Camry", "Toyota Camry", "Camry Hybrid"],
+      "aliases": [
+        "Camry",
+        "Toyota Camry",
+        "Camry Hybrid"
+      ],
       "body_type": "Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "8th Gen (XV70)",
-          "years": [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025],
+          "years": [
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025
+          ],
           "default_variant": "2.5 Hybrid",
           "engine": {
             "displacement": "2.5L (2487 cc)",
@@ -574,7 +770,15 @@
         },
         {
           "generation": "7th Gen (XV50)",
-          "years": [2011, 2012, 2013, 2014, 2015, 2016, 2017],
+          "years": [
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017
+          ],
           "default_variant": "2.5L AT / Hybrid",
           "engine": {
             "displacement": "2.5L (2494 cc)",
@@ -601,13 +805,25 @@
     {
       "make": "Toyota",
       "model": "Corolla Sedan",
-      "aliases": ["Corolla", "Toyota Corolla", "Corolla Altis"],
+      "aliases": [
+        "Corolla",
+        "Toyota Corolla",
+        "Corolla Altis"
+      ],
       "body_type": "Sedan",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "11th Gen (E170 / Altis)",
-          "years": [2013, 2014, 2015, 2016, 2017, 2018, 2019],
+          "years": [
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019
+          ],
           "default_variant": "Altis 1.8 VL AT / 1.4 D-4D",
           "engine": {
             "displacement": "1.8L (1798 cc)",
@@ -634,13 +850,30 @@
     {
       "make": "Toyota",
       "model": "Fortuner",
-      "aliases": ["Fortuner", "Toyota Fortuner", "Fortuner 4x4", "Fortuner Legender"],
+      "aliases": [
+        "Fortuner",
+        "Toyota Fortuner",
+        "Fortuner 4x4",
+        "Fortuner Legender"
+      ],
       "body_type": "Ladder-frame SUV",
       "seating_capacity": 7,
       "generations": [
         {
           "generation": "2nd Gen (AN160)",
-          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "years": [
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
           "default_variant": "2.8 4x4 AT",
           "engine": {
             "displacement": "2.8L (2755 cc)",
@@ -664,7 +897,15 @@
         },
         {
           "generation": "1st Gen (AN60)",
-          "years": [2009, 2010, 2011, 2012, 2013, 2014, 2015],
+          "years": [
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015
+          ],
           "default_variant": "3.0 D-4D 4x4",
           "engine": {
             "displacement": "3.0L (2982 cc)",
@@ -691,13 +932,28 @@
     {
       "make": "Toyota",
       "model": "Innova",
-      "aliases": ["Innova", "Toyota Innova", "Innova Crysta", "Innova Hycross"],
+      "aliases": [
+        "Innova",
+        "Toyota Innova",
+        "Innova Crysta",
+        "Innova Hycross"
+      ],
       "body_type": "MPV",
       "seating_capacity": 7,
       "generations": [
         {
           "generation": "2nd Gen (Innova Crysta)",
-          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024],
+          "years": [
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024
+          ],
           "default_variant": "2.4 ZX AT",
           "engine": {
             "displacement": "2.4L (2393 cc)",
@@ -724,13 +980,27 @@
     {
       "make": "Ford",
       "model": "F-150",
-      "aliases": ["F-150", "Ford F-150", "F150", "F-150 Regular Cab", "F-150 SuperCab", "F-150 SuperCrew"],
+      "aliases": [
+        "F-150",
+        "Ford F-150",
+        "F150",
+        "F-150 Regular Cab",
+        "F-150 SuperCab",
+        "F-150 SuperCrew"
+      ],
       "body_type": "Pickup Truck",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "13th Gen",
-          "years": [2015, 2016, 2017, 2018, 2019, 2020],
+          "years": [
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020
+          ],
           "default_variant": "XLT 3.5L V6 EcoBoost / 5.0L V8",
           "engine": {
             "displacement": "3.5L (3496 cc)",
@@ -754,7 +1024,14 @@
         },
         {
           "generation": "12th Gen",
-          "years": [2009, 2010, 2011, 2012, 2013, 2014],
+          "years": [
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014
+          ],
           "default_variant": "XLT 5.0L V8 / 3.5L EcoBoost",
           "engine": {
             "displacement": "5.0L (4951 cc)",
@@ -781,13 +1058,28 @@
     {
       "make": "Ford",
       "model": "Mustang",
-      "aliases": ["Mustang", "Ford Mustang", "Mustang Coupe", "Mustang GT"],
+      "aliases": [
+        "Mustang",
+        "Ford Mustang",
+        "Mustang Coupe",
+        "Mustang GT"
+      ],
       "body_type": "Coupe / Muscle Car",
       "seating_capacity": 4,
       "generations": [
         {
           "generation": "6th Gen (S550)",
-          "years": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
+          "years": [
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023
+          ],
           "default_variant": "GT 5.0L V8",
           "engine": {
             "displacement": "5.0L (4951 cc)",
@@ -814,13 +1106,24 @@
     {
       "make": "Chevrolet",
       "model": "Silverado",
-      "aliases": ["Silverado", "Chevrolet Silverado 1500", "Silverado 1500 Regular Cab", "Silverado 1500 Extended Cab"],
+      "aliases": [
+        "Silverado",
+        "Chevrolet Silverado 1500",
+        "Silverado 1500 Regular Cab",
+        "Silverado 1500 Extended Cab"
+      ],
       "body_type": "Pickup Truck",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "3rd Gen (K2XX)",
-          "years": [2014, 2015, 2016, 2017, 2018],
+          "years": [
+            2014,
+            2015,
+            2016,
+            2017,
+            2018
+          ],
           "default_variant": "LT 5.3L EcoTec3 V8",
           "engine": {
             "displacement": "5.3L (5328 cc)",
@@ -847,13 +1150,25 @@
     {
       "make": "Chevrolet",
       "model": "Corvette",
-      "aliases": ["Corvette", "Chevrolet Corvette", "Corvette ZR1", "Corvette Stingray"],
+      "aliases": [
+        "Corvette",
+        "Chevrolet Corvette",
+        "Corvette ZR1",
+        "Corvette Stingray"
+      ],
       "body_type": "Sports Car / Coupe",
       "seating_capacity": 2,
       "generations": [
         {
           "generation": "7th Gen (C7)",
-          "years": [2014, 2015, 2016, 2017, 2018, 2019],
+          "years": [
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019
+          ],
           "default_variant": "Stingray 6.2L LT1 V8",
           "engine": {
             "displacement": "6.2L (6162 cc)",
@@ -877,7 +1192,17 @@
         },
         {
           "generation": "6th Gen (C6)",
-          "years": [2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013],
+          "years": [
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013
+          ],
           "default_variant": "Base / ZR1 / Z06",
           "engine": {
             "displacement": "6.2L (6162 cc)",
@@ -904,13 +1229,24 @@
     {
       "make": "Maruti Suzuki",
       "model": "Swift",
-      "aliases": ["Swift", "Maruti Swift", "Suzuki Swift"],
+      "aliases": [
+        "Swift",
+        "Maruti Swift",
+        "Suzuki Swift"
+      ],
       "body_type": "Hatchback",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "3rd Gen",
-          "years": [2018, 2019, 2020, 2021, 2022, 2023],
+          "years": [
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023
+          ],
           "default_variant": "ZXi 1.2L K12M / AMT",
           "engine": {
             "displacement": "1.2L (1197 cc)",
@@ -934,7 +1270,15 @@
         },
         {
           "generation": "2nd Gen",
-          "years": [2011, 2012, 2013, 2014, 2015, 2016, 2017],
+          "years": [
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017
+          ],
           "default_variant": "VXi / VDi 1.3 DDiS",
           "engine": {
             "displacement": "1.2L (1197 cc)",
@@ -961,13 +1305,24 @@
     {
       "make": "Hyundai",
       "model": "Creta",
-      "aliases": ["Creta", "Hyundai Creta"],
+      "aliases": [
+        "Creta",
+        "Hyundai Creta"
+      ],
       "body_type": "Compact SUV",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "2nd Gen",
-          "years": [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "years": [
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
           "default_variant": "SX(O) 1.5 CRDi AT / 1.5 MPi",
           "engine": {
             "displacement": "1.5L (1493 cc)",
@@ -991,7 +1346,13 @@
         },
         {
           "generation": "1st Gen",
-          "years": [2015, 2016, 2017, 2018, 2019],
+          "years": [
+            2015,
+            2016,
+            2017,
+            2018,
+            2019
+          ],
           "default_variant": "SX Plus 1.6 CRDi AT",
           "engine": {
             "displacement": "1.6L (1582 cc)",
@@ -1018,13 +1379,25 @@
     {
       "make": "Tata",
       "model": "Nexon",
-      "aliases": ["Nexon", "Tata Nexon", "Nexon EV"],
+      "aliases": [
+        "Nexon",
+        "Tata Nexon",
+        "Nexon EV"
+      ],
       "body_type": "Compact SUV",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "1st Gen (Facelift)",
-          "years": [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "years": [
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
           "default_variant": "XZ Plus (O) 1.2 Revotron",
           "engine": {
             "displacement": "1.2L (1199 cc)",
@@ -1051,13 +1424,26 @@
     {
       "make": "Mahindra",
       "model": "Thar",
-      "aliases": ["Thar", "Mahindra Thar", "Thar 4x4", "Thar Roxx"],
+      "aliases": [
+        "Thar",
+        "Mahindra Thar",
+        "Thar 4x4",
+        "Thar Roxx"
+      ],
       "body_type": "Off-Road SUV",
       "seating_capacity": 4,
       "generations": [
         {
           "generation": "2nd Gen",
-          "years": [2020, 2021, 2022, 2023, 2024, 2025, 2026],
+          "years": [
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
           "default_variant": "LX 4x4 Hard Top 2.2 mHawk AT",
           "engine": {
             "displacement": "2.2L (2184 cc)",
@@ -1084,13 +1470,28 @@
     {
       "make": "Porsche",
       "model": "911",
-      "aliases": ["911", "Porsche 911", "911 Carrera", "911 GT3", "911 Turbo"],
+      "aliases": [
+        "911",
+        "Porsche 911",
+        "911 Carrera",
+        "911 GT3",
+        "911 Turbo"
+      ],
       "body_type": "Sports Car / Coupe",
       "seating_capacity": 4,
       "generations": [
         {
           "generation": "7th Gen (991)",
-          "years": [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019],
+          "years": [
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019
+          ],
           "default_variant": "Carrera S 3.8L / 3.0L Twin-Turbo",
           "engine": {
             "displacement": "3.8L (3800 cc)",
@@ -1117,13 +1518,27 @@
     {
       "make": "Volkswagen",
       "model": "Golf",
-      "aliases": ["Golf", "Volkswagen Golf", "Golf GTI", "Golf R"],
+      "aliases": [
+        "Golf",
+        "Volkswagen Golf",
+        "Golf GTI",
+        "Golf R"
+      ],
       "body_type": "Hatchback",
       "seating_capacity": 5,
       "generations": [
         {
           "generation": "7th Gen (Mk7)",
-          "years": [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019],
+          "years": [
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019
+          ],
           "default_variant": "2.0 TSI GTI / 1.4 TSI Highline",
           "engine": {
             "displacement": "2.0L (1984 cc)",
@@ -1144,6 +1559,251 @@
           },
           "source": "Volkswagen AG Technical Specifications",
           "source_url": "https://www.volkswagen.com/"
+        }
+      ]
+    },
+    {
+      "make": "Hyundai",
+      "model": "i20",
+      "aliases": [
+        "i20",
+        "Hyundai i20",
+        "Elite i20",
+        "i20 Hatchback",
+        "i20 Active"
+      ],
+      "body_type": "Hatchback",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "3rd Gen (BI3)",
+          "years": [
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ],
+          "default_variant": "1.2 Kappa / 1.0 Turbo GDi Asta (O)",
+          "engine": {
+            "displacement": "1.2L (1197 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated",
+            "horsepower": 83,
+            "torque_nm": 115,
+            "cylinders": 4
+          },
+          "transmission": "5-speed Manual / IVT (CVT) / 7-speed DCT",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 850000,
+            "USD": 12500,
+            "EUR": 17500,
+            "GBP": 16500
+          },
+          "source": "Hyundai Motor Company Official Specification / CarWale Catalog",
+          "source_url": "https://www.carwale.com/hyundai-cars/i20/"
+        },
+        {
+          "generation": "2nd Gen (GB / Elite i20)",
+          "years": [
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020
+          ],
+          "default_variant": "1.2 Dual VTVT Sportz / Magna",
+          "engine": {
+            "displacement": "1.2L (1197 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated",
+            "horsepower": 82,
+            "torque_nm": 114,
+            "cylinders": 4
+          },
+          "transmission": "5-speed Manual / 4-speed Automatic",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 720000,
+            "USD": 11000,
+            "EUR": 15200,
+            "GBP": 13800
+          },
+          "source": "Hyundai Motor Company Official Technical Documentation",
+          "source_url": "https://www.carwale.com/hyundai-cars/elite-i20/"
+        },
+        {
+          "generation": "1st Gen (PB)",
+          "years": [
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013
+          ],
+          "default_variant": "1.2 Kappa Magna / Asta",
+          "engine": {
+            "displacement": "1.2L (1197 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated",
+            "horsepower": 79,
+            "torque_nm": 112,
+            "cylinders": 4
+          },
+          "transmission": "5-speed Manual",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 580000,
+            "USD": 9200,
+            "EUR": 12500,
+            "GBP": 10500
+          },
+          "source": "Hyundai Motor UK & India Archives",
+          "source_url": "https://www.parkers.co.uk/hyundai/i20/"
+        }
+      ]
+    },
+    {
+      "make": "Hyundai",
+      "model": "i30",
+      "aliases": [
+        "i30",
+        "Hyundai i30",
+        "i30 Hatchback",
+        "i30 Fastback"
+      ],
+      "body_type": "Hatchback",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "3rd Gen (PD)",
+          "years": [
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024
+          ],
+          "default_variant": "1.4 T-GDi / 1.0 T-GDi SE Connect",
+          "engine": {
+            "displacement": "1.4L (1353 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Turbocharged",
+            "horsepower": 138,
+            "torque_nm": 242,
+            "cylinders": 4
+          },
+          "transmission": "6-speed Manual / 7-speed DCT",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 1200000,
+            "USD": 19500,
+            "EUR": 22500,
+            "GBP": 19800
+          },
+          "source": "Hyundai Motor Europe Official Spec Sheet",
+          "source_url": "https://www.hyundai.co.uk/new-cars/i30"
+        },
+        {
+          "generation": "2nd Gen (GD)",
+          "years": [
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016
+          ],
+          "default_variant": "1.4 / 1.6 CRDi Active / Style",
+          "engine": {
+            "displacement": "1.6L (1591 cc)",
+            "configuration": "Inline-4",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated",
+            "horsepower": 118,
+            "torque_nm": 156,
+            "cylinders": 4
+          },
+          "transmission": "6-speed Manual / 6-speed Automatic",
+          "drivetrain": "FWD",
+          "msrp_new": {
+            "INR": 980000,
+            "USD": 16500,
+            "EUR": 18500,
+            "GBP": 15800
+          },
+          "source": "Hyundai Technical Archive / Parkers UK Guide",
+          "source_url": "https://www.parkers.co.uk/hyundai/i30/"
+        }
+      ]
+    },
+    {
+      "make": "Dodge",
+      "model": "Challenger",
+      "aliases": [
+        "Challenger",
+        "Dodge Challenger",
+        "Dodge Challenger Coupe",
+        "Challenger R/T",
+        "Challenger SRT",
+        "Challenger SXT"
+      ],
+      "body_type": "Coupe / Muscle Car",
+      "seating_capacity": 5,
+      "generations": [
+        {
+          "generation": "3rd Gen (Modern LC/LA)",
+          "years": [
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023
+          ],
+          "default_variant": "R/T 5.7L HEMI V8",
+          "engine": {
+            "displacement": "5.7L (5654 cc)",
+            "configuration": "V8",
+            "fuel_type": "Petrol",
+            "aspiration": "Naturally Aspirated HEMI V8",
+            "horsepower": 375,
+            "torque_nm": 556,
+            "cylinders": 8
+          },
+          "transmission": "6-speed Manual / 8-speed TorqueFlite Automatic",
+          "drivetrain": "RWD",
+          "msrp_new": {
+            "USD": 32000,
+            "INR": 6500000,
+            "EUR": 39000,
+            "GBP": 35000
+          },
+          "source": "FCA Stellantis Official Archive / Kelley Blue Book",
+          "source_url": "https://www.kbb.com/dodge/challenger/"
         }
       ]
     }

@@ -1,21 +1,78 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import LandingView from './components/LandingView';
 import DetectView from './components/DetectView';
 import InfoModals from './components/InfoModals';
-import CustomCursor from './components/CustomCursor';
 import ScrollProgress from './components/ScrollProgress';
-import Preloader from './components/Preloader';
+
+// Elements that fade/slide in on scroll, and headings that get the text-reveal effect.
+const REVEAL_SELECTOR = [
+  '.hero-artwork-frame', '.hero-editorial-footer', '.ei-head', '.ei-branch', '.ei-q > *',
+  '.ei-spec-layout > *', '.ei-cta', '.detect-header-block', '.detect-upload-column', '.detect-results-column',
+].join(',');
+const TEXT_SELECTOR = '.hero-title-line, .ei-h2, .ei-h3, .ei-cta-title, .detect-page-title';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('landing');
+  const getInitialTab = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'detect' || window.location.hash === '#detect') {
+        return 'detect';
+      }
+    }
+    return 'landing';
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  // Scroll-reveal: CSS hides `.reveal` elements only when motion is allowed (see landing.css).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (typeof IntersectionObserver === 'undefined') return undefined;
+    const nodes = document.querySelectorAll(`${REVEAL_SELECTOR}, ${TEXT_SELECTOR}`);
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.06, rootMargin: '0px 0px -6% 0px' },
+    );
+    nodes.forEach((n) => {
+      n.classList.add(n.matches(TEXT_SELECTOR) ? 'reveal-text' : 'reveal');
+      io.observe(n);
+    });
+    // Safety net for jumps (End key, anchors): reveal anything now at or above the fold.
+    let timer = 0;
+    const sweep = () => {
+      document.querySelectorAll('.reveal:not(.is-visible), .reveal-text:not(.is-visible)').forEach((n) => {
+        if (n.getBoundingClientRect().top < window.innerHeight * 0.94) {
+          n.classList.add('is-visible');
+          io.unobserve(n);
+        }
+      });
+    };
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(sweep, 140);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', onScroll);
+      io.disconnect();
+    };
+  }, [activeTab]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [resultData, setResultData] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [historyItems, setHistoryItems] = useState([]);
-  const [isPreloaded, setIsPreloaded] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
 
   // Handle image selection in workspace
   const handleImageSelected = (file) => {
@@ -29,52 +86,88 @@ export default function App() {
   const handleReset = () => {
     setSelectedFile(null);
     setImagePreview(null);
+    setResultData(null);
     setErrorMessage(null);
   };
 
-  // Call the live AUTOVISION AI FastAPI backend
-  const handleAnalyze = async () => {
-    if (!selectedFile) return;
+  // Call the live FastAPI backend. Uses XHR for real upload progress and polls
+  // /progress/{jobId} for real server-side stage boundaries (nothing is simulated).
+  const handleAnalyze = () => {
+    if (!selectedFile || isAnalyzing) return;
+
+    const jobId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+    const apiBase = window.location.port === '5173' ? 'http://localhost:8000' : '';
+    const endpoint = `${apiBase}/predict?market_region=India&enable_groq_inspection=true&enable_final_verdict=true&job_id=${jobId}`;
 
     setIsAnalyzing(true);
     setErrorMessage(null);
+    setResultData(null);
+    setAnalysis({ startedAt: Date.now(), uploadPct: 0, uploadDone: false, current: null, completed: [] });
 
     const formData = new FormData();
     formData.append('file', selectedFile);
 
-    // Auto-detect API base URL (relative for proxy / port 8000 fallback)
-    const apiBase = window.location.port === '5173' ? 'http://localhost:8000' : '';
-    const endpoint = `${apiBase}/predict?market_region=India&enable_groq_inspection=true&enable_final_verdict=true`;
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint);
+    xhr.timeout = 300000;
 
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Server returned error status ${response.status}`);
+    const poll = setInterval(async () => {
+      try {
+        const r = await fetch(`${apiBase}/progress/${jobId}`);
+        if (r.ok) {
+          const p = await r.json();
+          setAnalysis((a) => (a ? { ...a, current: p.current, completed: p.completed } : a));
+        }
+      } catch {
+        /* progress is best-effort; the main request reports real errors */
       }
+    }, 1000);
 
-      const data = await response.json();
-      setResultData(data);
-
-      // Add to session history
-      const newHistoryItem = {
-        make: data?.vehicle?.make || 'Vehicle',
-        model: data?.vehicle?.model || '',
-        confidence: data?.vehicle?.confidence || 0.0,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setHistoryItems((prev) => [newHistoryItem, ...prev]);
-
-    } catch (err) {
-      console.warn('Backend inference failed:', err);
-      setErrorMessage(`Live inference note: ${err.message}. Showing real system response status.`);
-    } finally {
+    const end = (message) => {
+      clearInterval(poll);
       setIsAnalyzing(false);
-    }
+      setAnalysis(null);
+      if (message) setErrorMessage(message);
+    };
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        setAnalysis((a) => (a ? { ...a, uploadPct: Math.round((e.loaded / e.total) * 100) } : a));
+      }
+    };
+    xhr.upload.onload = () => setAnalysis((a) => (a ? { ...a, uploadPct: 100, uploadDone: true } : a));
+
+    xhr.onload = () => {
+      let data = null;
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        /* handled below */
+      }
+      if (xhr.status < 200 || xhr.status >= 300 || !data) {
+        const detail = data?.detail;
+        const text = typeof detail === 'string' ? detail : detail ? JSON.stringify(detail) : `Server returned status ${xhr.status}`;
+        end(`Analysis failed: ${text}`);
+        return;
+      }
+      setResultData(data);
+      setHistoryItems((prev) => [
+        {
+          make: data?.vehicle?.make || 'Vehicle',
+          model: data?.vehicle?.model || '',
+          confidence: data?.vehicle?.confidence ?? null,
+          uncertain: data?.vehicle?.is_uncertain === true,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+        ...prev,
+      ]);
+      end();
+    };
+    xhr.onerror = () => end('Analysis failed: could not reach the analysis server. Check that the backend is running.');
+    xhr.ontimeout = () => end('Analysis failed: the request timed out after 5 minutes. The vision service may be overloaded; try again shortly.');
+    xhr.onabort = () => end('Analysis cancelled.');
+
+    xhr.send(formData);
   };
 
   // Modal close handler: returns to previous main tab ('landing' or 'detect')
@@ -85,21 +178,14 @@ export default function App() {
   };
 
   return (
-    <div style={styles.appRoot}>
-      {/* 1. Cinematic Introductory Preloader (First Visit Only) */}
-      <Preloader onComplete={() => setIsPreloaded(true)} />
-
-      {/* 2. Top Scroll Progress Indicator */}
+    <div className="app-layout">
       <ScrollProgress />
-
-      {/* 3. Circular Custom Cursor with Trailing Ring */}
-      <CustomCursor />
-
-      {/* 4. Left Charcoal Sidebar */}
+      {/* 1. Left Charcoal Navigation Sidebar (Responsive: Bottom bar on mobile) */}
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* 5. Main Canvas (Landing View or Detection View) */}
-      <main style={styles.mainCanvas}>
+      {/* 2. Main Canvas (Landing View or Detection View) */}
+      <main className="app-main-content">
+        <div key={activeTab === 'landing' ? 'landing' : 'detect'} className="page-enter">
         {activeTab === 'landing' ? (
           <LandingView onNavigateToDetect={() => setActiveTab('detect')} />
         ) : (
@@ -113,11 +199,13 @@ export default function App() {
             onReset={handleReset}
             errorMessage={errorMessage}
             resultData={resultData}
+            analysis={analysis}
           />
         )}
+        </div>
       </main>
 
-      {/* 6. Informational Overlays for History, Analytics, About */}
+      {/* 3. Informational Overlays for History, Analytics, About */}
       <InfoModals
         activeTab={activeTab}
         onClose={handleModalClose}
@@ -126,26 +214,3 @@ export default function App() {
     </div>
   );
 }
-
-const styles = {
-  appRoot: {
-    display: 'flex',
-    minHeight: '100vh',
-    width: '100%',
-    backgroundColor: 'var(--bg-warm-chalk)',
-    color: 'var(--text-ink-black)',
-    position: 'relative',
-    overflowX: 'hidden',
-  },
-  mainCanvas: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '36px 48px',
-    maxWidth: '1680px',
-    margin: '0 auto',
-    width: '100%',
-    position: 'relative',
-    zIndex: 10,
-  },
-};

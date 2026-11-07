@@ -3,6 +3,7 @@
 import base64
 import json
 import logging
+import re
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 import cv2
@@ -15,9 +16,47 @@ from .config import (
     GROQ_VERDICT_MODEL,
     GROQ_TIMEOUT,
     GROQ_MAX_RETRIES,
+    GROQ_IMAGE_MAX_DIM,
+    GROQ_IMAGE_JPEG_QUALITY,
 )
 
 logger = logging.getLogger("autovision.groq")
+
+_SECRET_PATTERN = re.compile(r"(gsk_[A-Za-z0-9]+|org_[A-Za-z0-9]+|Bearer\s+[A-Za-z0-9._\-]+)")
+
+
+def _redact(text: Any) -> str:
+    """Strip API keys, org ids and bearer tokens from text before it is logged or returned."""
+    return _SECRET_PATTERN.sub("[redacted]", str(text))
+
+
+# Longest wait (seconds) we will absorb when both keys are briefly rate-limited.
+MAX_RATE_LIMIT_WAIT = 15.0
+
+_RETRY_HINT = re.compile(r"try again in\s+(?:(\d+)h)?\s*(?:(\d+)m)?\s*(?:(\d+(?:\.\d+)?)s)?", re.IGNORECASE)
+
+
+def _cooldown_seconds(err: Any) -> float:
+    """How long to pause a rate-limited key: Groq's own 'try again in ...' hint (+1 s), else 60 s.
+    Short per-minute limits clear in seconds, so don't lock a key for a fixed 5 minutes."""
+    m = _RETRY_HINT.search(str(err))
+    if m and any(m.groups()):
+        h, mi, sec = (float(g) if g else 0.0 for g in m.groups())
+        return min(3600.0, max(2.0, h * 3600 + mi * 60 + sec + 1.0))
+    return 60.0
+
+
+class _RedactingFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            record.msg = _redact(record.getMessage())
+            record.args = ()
+        except Exception:
+            pass
+        return True
+
+
+logger.addFilter(_RedactingFilter())
 
 
 class GroqServiceError(Exception):
@@ -49,6 +88,8 @@ class GroqService:
 
         self._primary_client = None
         self._backup_client = None
+        self._primary_exhausted_until = 0.0
+        self._backup_exhausted_until = 0.0
         self._init_clients()
 
     def _init_clients(self) -> None:
@@ -56,9 +97,9 @@ class GroqService:
         try:
             from groq import Groq
             if self.primary_api_key and self.primary_api_key.strip():
-                self._primary_client = Groq(api_key=self.primary_api_key.strip(), timeout=self.timeout)
+                self._primary_client = Groq(api_key=self.primary_api_key.strip(), timeout=self.timeout, max_retries=0)
             if self.backup_api_key and self.backup_api_key.strip():
-                self._backup_client = Groq(api_key=self.backup_api_key.strip(), timeout=self.timeout)
+                self._backup_client = Groq(api_key=self.backup_api_key.strip(), timeout=self.timeout, max_retries=0)
         except Exception as e:
             logger.warning(f"Failed to initialize Groq clients: {e}")
 
@@ -67,29 +108,78 @@ class GroqService:
         """Check if at least one Groq API key is configured."""
         return bool(self._primary_client or self._backup_client)
 
+    # Single-entry cache: one request sends the same frame to several Groq calls,
+    # so encode it once instead of once per call. Keyed by object identity (the cache holds a
+    # reference, so the id cannot be reused); hashing pixels would cost more than re-encoding.
+    _b64_cache: Tuple[Any, int, int, str] = (None, 0, 0, "")
+
     @staticmethod
-    def encode_image_base64(image: Union[np.ndarray, bytes]) -> str:
-        """Encode an RGB numpy image or raw bytes into a base64 string."""
-        if isinstance(image, bytes):
-            return base64.b64encode(image).decode("utf-8")
+    def encode_image_base64(
+        image: Union[np.ndarray, bytes],
+        max_dim: Optional[int] = None,
+        quality: Optional[int] = None,
+    ) -> str:
+        """Resize (aspect-preserving, never upscaling) and JPEG-compress an image for Groq.
+
+        Accepts an RGB ndarray or encoded image bytes. Raises ValueError for undecodable
+        input; the raw bytes are never forwarded. The caller's image is not modified.
+        """
+        max_dim = int(max_dim or GROQ_IMAGE_MAX_DIM)
+        quality = int(quality or GROQ_IMAGE_JPEG_QUALITY)
+        quality = min(95, max(40, quality))
+
+        if isinstance(image, (bytes, bytearray)):
+            raw = bytes(image) if not isinstance(image, bytes) else image
+            original_bytes = len(raw)
         elif isinstance(image, np.ndarray):
-            # Convert RGB to BGR for OpenCV encoding
-            if image.ndim == 3 and image.shape[2] == 3:
-                bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            elif image.ndim == 2:
-                bgr = image
+            arr = image
+            original_bytes = arr.nbytes
+        else:
+            raise TypeError(f"Unsupported image format for base64 encoding: {type(image)}")
+
+        c_img, c_dim, c_q, c_val = GroqService._b64_cache
+        if c_img is image and c_dim == max_dim and c_q == quality:
+            return c_val
+
+        t0 = time.perf_counter()
+        if isinstance(image, (bytes, bytearray)):
+            bgr = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
+            if bgr is None:
+                raise ValueError("Unsupported or corrupt image data; cannot prepare it for Groq.")
+        else:
+            if arr.ndim == 3 and arr.shape[2] >= 3:
+                bgr = cv2.cvtColor(arr[:, :, :3], cv2.COLOR_RGB2BGR)
+            elif arr.ndim == 2:
+                bgr = cv2.cvtColor(arr, cv2.COLOR_GRAY2BGR)
             else:
-                bgr = image[:, :, :3]
-            success, buffer = cv2.imencode(".jpg", bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
-            if not success:
-                raise ValueError("Failed to encode image to JPEG buffer.")
-            return base64.b64encode(buffer.tobytes()).decode("utf-8")
-        raise TypeError(f"Unsupported image format for base64 encoding: {type(image)}")
+                raise ValueError(f"Unsupported image array shape: {arr.shape}")
+
+        h, w = bgr.shape[:2]
+        if max(h, w) > max_dim:
+            scale = max_dim / float(max(h, w))
+            new_w, new_h = max(1, int(round(w * scale))), max(1, int(round(h * scale)))
+            bgr = cv2.resize(bgr, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+        ok, buffer = cv2.imencode(".jpg", bgr, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
+        if not ok:
+            raise ValueError("Failed to encode image to JPEG buffer.")
+        jpeg = buffer.tobytes()
+        b64 = base64.b64encode(jpeg).decode("utf-8")
+
+        logger.info(
+            "Groq image optimised: %dx%d (%.1f KB %s) -> %dx%d JPEG q%d (%.1f KB, %.1f KB base64) in %.0f ms",
+            w, h, original_bytes / 1024, "encoded" if isinstance(image, (bytes, bytearray)) else "raw pixels",
+            bgr.shape[1], bgr.shape[0], quality, len(jpeg) / 1024, len(b64) / 1024,
+            (time.perf_counter() - t0) * 1000,
+        )
+        GroqService._b64_cache = (image, max_dim, quality, b64)
+        return b64
 
     def _execute_with_failover(
         self,
         call_fn,
         description: str = "Groq call",
+        _retried: bool = False,
     ) -> Tuple[Any, str]:
         """
         Execute an API call with automatic failover:
@@ -98,21 +188,30 @@ class GroqService:
         """
         last_error = None
 
-        # 1. Try Primary
-        if self._primary_client:
+        # 1. Try Primary if available and not quota-exhausted
+        now = time.time()
+        if self._primary_client and now >= self._primary_exhausted_until:
             for attempt in range(1, self.max_retries + 1):
                 try:
                     res = call_fn(self._primary_client)
                     return res, "primary"
                 except Exception as e:
                     last_error = e
+                    err_str = str(e).lower()
+                    is_rate_limit = "429" in err_str or "rate limit" in err_str or "rate_limit" in err_str or "tokens per day" in err_str
+                    if is_rate_limit:
+                        logger.warning(
+                            f"Primary Groq hit quota/rate limit during {description}; pausing primary key: {e}"
+                        )
+                        self._primary_exhausted_until = time.time() + _cooldown_seconds(e)
+                        break  # Immediately fail over to backup without waiting
                     logger.warning(
                         f"Primary Groq {description} failed (attempt {attempt}/{self.max_retries}): {e}"
                     )
-                    time.sleep(0.3 * attempt)
+                    time.sleep(0.2 * attempt)
 
-        # 2. Try Backup if Primary failed or was unavailable
-        if self._backup_client:
+        # 2. Try Backup if Primary failed or was unavailable/exhausted
+        if self._backup_client and now >= self._backup_exhausted_until:
             logger.info(f"Failing over to Backup Groq for {description}...")
             for attempt in range(1, self.max_retries + 1):
                 try:
@@ -120,15 +219,34 @@ class GroqService:
                     return res, "backup"
                 except Exception as e:
                     last_error = e
+                    err_str = str(e).lower()
+                    is_rate_limit = "429" in err_str or "rate limit" in err_str or "rate_limit" in err_str or "tokens per day" in err_str
+                    if is_rate_limit:
+                        logger.warning(
+                            f"Backup Groq hit quota/rate limit during {description}; pausing backup key: {e}"
+                        )
+                        self._backup_exhausted_until = time.time() + _cooldown_seconds(e)
+                        break
                     logger.warning(
                         f"Backup Groq {description} failed (attempt {attempt}/{self.max_retries}): {e}"
                     )
-                    time.sleep(0.3 * attempt)
+                    time.sleep(0.2 * attempt)
 
-        # 3. Both failed or neither available
+        # 3. Both keys rate-limited for only a few seconds (per-minute token limits): wait once and retry,
+        #    which is better than silently dropping the vision analysis.
+        if not _retried and self._primary_client and self._backup_client:
+            now2 = time.time()
+            waits = [t - now2 for t in (self._primary_exhausted_until, self._backup_exhausted_until) if t > now2]
+            if len(waits) == 2 and min(waits) <= MAX_RATE_LIMIT_WAIT:
+                wait = min(waits) + 0.5
+                logger.info(f"Both Groq keys rate-limited for {description}; waiting {wait:.1f}s to retry once.")
+                time.sleep(wait)
+                return self._execute_with_failover(call_fn, description, _retried=True)
+
+        # 4. Both failed or neither available
         err_msg = f"Both Groq APIs failed for {description}." if (self._primary_client or self._backup_client) else "No Groq API keys configured."
         if last_error:
-            err_msg += f" Last error: {last_error}"
+            err_msg += f" Last error: {_redact(last_error)}"
         logger.error(err_msg)
         raise GroqServiceError(err_msg)
 

@@ -22,6 +22,7 @@ from .preprocessing import AdaptivePreprocessor
 from .classical_cv import ClassicalCVAnalyzer
 from .exterior_model import ExteriorComponentDetector
 from .groq_service import GroqService
+from .vision_service import VisionService
 from .quality_assessment import ImageQualityAssessor
 from .adaptive_enhancer import AdaptiveEnhancer
 from .prediction_comparator import PredictionComparator
@@ -61,7 +62,7 @@ class VehicleRecognitionPipeline:
         self.classifier = classifier or VehicleClassifier()
         self.preprocessor = preprocessor or AdaptivePreprocessor()
         self.classical_analyzer = classical_analyzer or ClassicalCVAnalyzer()
-        self.groq_service = groq_service or GroqService()
+        self.groq_service = groq_service or VisionService()
         self.quality_assessor = quality_assessor or ImageQualityAssessor()
         self.adaptive_enhancer = adaptive_enhancer or AdaptiveEnhancer(assessor=self.quality_assessor)
         self.prediction_comparator = prediction_comparator or PredictionComparator()

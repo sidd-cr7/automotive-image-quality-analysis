@@ -254,10 +254,16 @@ class VehicleIntelligenceService:
         actual_variant = variant or matched_gen.get("default_variant")
         verification_status = "verified" if variant else "estimated"
 
+        # Determine effective year
+        effective_year = year
+        if effective_year is None and matched_gen.get("years"):
+            years_list = sorted(matched_gen["years"])
+            effective_year = years_list[len(years_list) // 2]
+
         spec = VehicleSpecifications(
             make=matched_vehicle.get("make", make_clean),
             model=matched_vehicle.get("model", model_clean),
-            year=year,
+            year=effective_year,
             generation=matched_gen.get("generation") or generation,
             variant=actual_variant,
             engine=engine,
@@ -321,8 +327,8 @@ class VehicleIntelligenceService:
         model_clean = model.strip()
 
         matched_vehicle = self._find_vehicle_record(make_clean, model_clean)
-        if not matched_vehicle or year is None:
-            # Model or year unknown: return transparently unavailable, NEVER fabricate!
+        if not matched_vehicle:
+            # Model unknown: return transparently unavailable, NEVER fabricate!
             valuation = MarketValuation(
                 estimated_price=None,
                 minimum_price=None,
@@ -338,7 +344,7 @@ class VehicleIntelligenceService:
                 reliability="unavailable",
                 assumptions=[
                     f"Market valuation unavailable: vehicle model '{make_clean} {model_clean}' "
-                    f"{'or model year' if year is None else ''} is not mapped to reliable regional pricing indices."
+                    f"is not mapped to reliable regional pricing indices."
                 ],
             )
             self._val_cache[cache_key] = (now_ts, valuation)
@@ -362,11 +368,24 @@ class VehicleIntelligenceService:
                 retrieved_at=now_iso,
                 reliability="unavailable",
                 assumptions=[
-                    f"Baseline regional pricing for year {year} not found in verified market indices."
+                    f"Baseline regional pricing for '{make_clean} {model_clean}' not found in verified market indices."
                 ],
             )
             self._val_cache[cache_key] = (now_ts, valuation)
             return valuation
+
+        # Determine effective model year for depreciation
+        effective_year = year
+        assumptions: List[str] = []
+        if effective_year is None and matched_gen.get("years"):
+            years_list = sorted(matched_gen["years"])
+            effective_year = years_list[len(years_list) // 2]
+            assumptions.append(
+                f"Model year not explicitly specified: estimated as {effective_year} based on the identified {matched_gen.get('generation')}."
+            )
+        elif effective_year is None:
+            effective_year = current_year - 5
+            assumptions.append("Model year not explicitly specified: baseline 5-year vehicle age assumed.")
 
         # Base MSRP in target currency
         msrp_dict = matched_gen.get("msrp_new", {})
@@ -381,7 +400,7 @@ class VehicleIntelligenceService:
                 base_msrp = float(next(iter(msrp_dict.values()), 0.0))
 
         # Vehicle Age & Depreciation Calculation
-        age = max(0, current_year - year)
+        age = max(0, current_year - effective_year)
         retention_ratio = self._calculate_depreciation_retention(
             age=age,
             make=make_clean,

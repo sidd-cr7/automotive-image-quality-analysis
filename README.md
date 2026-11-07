@@ -1,187 +1,134 @@
-# ENGINE INTELLIGENCE (AUTOVISION AI)
+# ENGINE INTELLIGENCE
 
-> **Multi-Model Automotive Perception, Image Quality Assessment & Adaptive Computer Vision**  
-> Built for CV Hackathon '26 | Aesthetic: *Editorial Surrealism*
+Fine-grained vehicle recognition and analysis. Upload a photo; get a ranked make/model guess, exterior component
+segmentation, an image-quality report and (when a vision model is available) a written visual analysis.
+Built for CV Hackathon '26. Design language: *Editorial Surrealism*.
 
-[![Python](https://img.shields.io/badge/Python-3.10%20|%203.11%20|%203.14-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg)](https://pytorch.org/)
-[![Ultralytics](https://img.shields.io/badge/YOLO-v8%20|%2011n--seg-00FFFF.svg)](https://ultralytics.com/)
-[![React](https://img.shields.io/badge/React-19.0-61DAFB.svg)](https://react.dev/)
-[![Tests](https://img.shields.io/badge/Tests-69%20Passing-brightgreen.svg)]()
+## What it does (and does not do)
 
----
+| Stage | Implementation |
+|---|---|
+| Vehicle detection | YOLOv8n (`models/detection/yolov8n.pt`) |
+| Vehicle classification | **Whole frame** resized to 224x224, ResNet-50 + EfficientNet-B0 probabilities averaged, 196 Stanford Cars classes |
+| Exterior analysis | YOLO11n-seg (`exterior_best.pt`), 23 exterior component classes |
+| Image quality | Blur, exposure, noise, tilt metrics plus adaptive enhancement (CLAHE, gamma, sharpening) |
+| Vision analysis | **One combined request per image** to Gemini Flash (primary), else Groq (secondary, two keys); see "Vision providers" |
+| Specs / valuation | Looked up from `data/automotive_reference_data.json`; left **unavailable** when the model is not in the data |
 
-## 🏛️ Overview
+### Honest accuracy
+Measured on 150 held-out Stanford Cars *test* photos through the real pipeline (CV models only, Groq off):
 
-**ENGINE INTELLIGENCE** is an end-to-end multi-model computer vision platform for automotive recognition, component segmentation, quality defect restoration, and powertrain intelligence. 
+| Setup | Top-1 | Top-5 |
+|---|---|---|
+| Old: classify the YOLO crop | 7.3% | 24.7% |
+| Current: full frame, ResNet-50 + EfficientNet-B0 | 36.7% | 70.7% |
 
-Instead of relying on a single monolithic model or generic SaaS interfaces, the system merges **Editorial Surrealism** design principles with a **four-stage AI/CV pipeline**:
+The classifiers were trained on whole frames, so classifying a tight crop collapses accuracy. The weights are
+modest (about 50% top-1 on their own training images). They only know the 196 Stanford Cars classes (mostly US
+models, 1990 to 2012). **Modern, non-US, dark or occluded cars are usually not recognised by the classifier.**
+Confidence is reasonably calibrated: above 0.40 was roughly 90% accurate in testing, below 0.20 about 25%.
+Anything under the 0.40 threshold is shown as *uncertain*.
 
-1. **Part 1: Three-Branch Parallel Perception Engine**
-   - **Branch 1 (Vehicle ID)**: YOLOv8 vehicle detection + ResNet-50 feature extraction across Stanford Cars dataset.
-   - **Branch 2 (Exterior Intelligence)**: Custom-trained YOLO11n-seg (`exterior_best.pt`) segmenting 23 exterior component classes and detecting aftermarket modifications.
-   - **Branch 3 (Interior & Engine Cognition)**: Multimodal Groq Llama-Vision with automated primary-to-backup API failover.
-   - **Consensus & Final Verdict**: Cross-branch verification identifying contradictions and synthesizing unified perceptions.
+### Who identified the car
+The result's `vehicle.identification_source` says which component produced the answer:
 
-2. **Part 2: Intelligent Image Quality Assessment & Adaptive CV Enhancement**
-   - Quantifies exposure (underexposure/overexposure), motion blur (Laplacian variance), sensor noise, and specular highlights.
-   - Dynamically selects and tunes restoration filters (CLAHE lighting balance, Bilateral edge-preserving smoothing, Unsharp masking).
-   - Preserves original imagery while generating branch-specific enhanced streams.
+- `classifier_only`: local ResNet-50 + EfficientNet-B0 result; no vision provider answered.
+- `classifier_confirmed_by_<provider>`: the vision provider reached the same make/model; classifier confidence is shown.
+- `<provider>_vision` (`gemini_vision` / `groq_vision`): the vision provider changed the identification. There is
+  **no calibrated confidence** (`confidence` is `null`), the result is flagged uncertain, `vehicle.vision_provider`
+  names the provider, and the classifier's own guess is shown alongside. Year is an estimate.
 
-3. **Part 3: Comparative Confidence & Information Entropy Selection**
-   - Runs parallel inference on both original and restored images.
-   - Evaluates bounding-box stability, classification entropy, mask confidence, and multimodal visual reasoning.
-   - Intelligently routes the optimal image version per branch rather than assuming enhancement is always superior.
+In a small hands-on check (6 hard images: night/smoke Challenger, a modern UK Hyundai i20, four Stanford Cars photos),
+Gemini named the right make and model on all 6 where the local classifier got none. That is six images, not a
+benchmark, and year estimates were off by 1 to 3 years.
 
-4. **Part 4: Verified Technical Specifications & Market Valuation**
-   - Maps predicted make, model, and year to authentic powertrain specifications (displacement, configuration, horsepower, torque, drivetrain, transmission).
-   - Generates regional market valuations (INR, USD, EUR, GBP) taking into account mileage and depreciation.
+## Architecture
 
----
+```
+React 19 + Vite (frontend/)  ->  FastAPI (api.py)  ->  VehicleRecognitionPipeline (src/pipeline.py)
+                                                         -> MultiModelOrchestrator (src/orchestrator.py)
+   Branch 1: detector.py + classifier.py   Branch 2: exterior_model.py   Branch 3 + verdict: vision_service.py
+   quality_assessment.py / adaptive_enhancer.py / prediction_comparator.py / vehicle_intelligence.py
+```
 
-## 🎨 Visual Identity: Editorial Surrealism
+`GET /progress/{job_id}` reports real server-side stage boundaries (detection, inspection, final) so the UI
+loading panel never fakes progress. Production: FastAPI serves the built UI from `frontend/dist` on the same origin.
 
-The interface rejects generic AI dashboard tropes in favor of an experimental editorial aesthetic inspired by classical sculpture, mechanical engineering diagrams, and alpine landscape photography:
+## Setup
 
-- **Warm Chalk (`#F1EBDD`)**: 70% primary canvas background with subtle organic paper-grain texture.
-- **Ink Black (`#20201E`)**: 15% structural typography and high-contrast editorial hierarchy.
-- **Petrol Teal (`#176B70`)**: 10% primary signature accent for interactive elements and verified statuses.
-- **Tangerine (`#F28B45`)**: 5% contrasting highlight accent for warnings, indicators, and kinetic details.
-- **Warm Stone (`#DED5C5`)**: Secondary surfaces, frosted cards, and subtle dividers.
-
-### Interactive Features
-- **Custom Precision Cursor**: Smooth lerp tracking with interactive element expansion; disabled on touch devices.
-- **Kinetic Multi-Layer Parallax**: Separated layers (etched mountains, rising sun, marble bust, mechanical visor, winding road) with an animated miniature vehicle traveling along the road during scroll.
-- **Cinematic Wireframe Preloader**: Self-drawing SVG car outline sequence shown once per session.
-- **Dual Experience**: Immersive Landing Manifesto separated from the dedicated Detection Laboratory Workspace (with zero fabricated results).
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.10+ (Tested up to Python 3.14)
-- Node.js 18+ and npm (for frontend development)
-- Optional: Groq API Key (for Branch 3 visual reasoning)
-
-### 1. Clone & Set Up Backend
+Requirements: Python 3.10+ and Node 18+.
 
 ```bash
-git clone https://github.com/sidd-cr7/automotive-image-quality-analysis.git
-cd automotive-image-quality-analysis
-
-# Create virtual environment
-python -m venv venv
-# On Windows:
-.\venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
+cp .env.example .env        # then put your real keys in .env (never commit it)
+cd frontend && npm install && npm run build && cd ..
+python run_server.py        # http://localhost:8000  (UI + API)
 ```
 
-### 2. Configure Environment (Optional)
+Development with hot reload: run `python run_server.py` and, in `frontend/`, `npm run dev` (http://localhost:5173).
 
-Copy `.env.example` to `.env` and set your Groq API keys if you wish to run Branch 3 visual reasoning:
+## Environment variables (`.env`)
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `GEMINI_API_KEY` | Gemini key (primary vision provider). | empty |
+| `GEMINI_MODEL`, `GEMINI_TIMEOUT` | Model id and request timeout (s). `gemini-2.5-flash` is retired for new keys; `gemini-flash-latest` timed out in testing. | `gemini-flash-lite-latest`, 25 |
+| `VISION_PROVIDER_ORDER` | Comma-separated provider order (`gemini`, `groq`) | `gemini,groq` |
+| `VISION_CACHE_SIZE`, `VISION_CACHE_TTL` | Result cache entries and TTL (s) | 64, 3600 |
+| `GROQ_API_KEY` / `GROQ_API_KEY_BACKUP` | Primary and backup Groq keys. Read only from the environment, never sent to the browser, logged or returned. | empty |
+| `GROQ_VISION_MODEL`, `GROQ_VERDICT_MODEL` | Groq model ids | see `.env.example` |
+| `GROQ_TIMEOUT`, `GROQ_MAX_RETRIES` | Request timeout (s) and per-key retries | 20, 2 |
+| `GROQ_IMAGE_MAX_DIM`, `GROQ_IMAGE_JPEG_QUALITY` | Longest edge and JPEG quality for images sent to any vision provider | 1024, 78 |
+| `MAX_UPLOAD_BYTES` | Reject larger uploads with HTTP 413 | 26214400 (25 MB) |
+| `CORS_ORIGINS` | Comma-separated allowed origins for a separately hosted frontend | localhost 5173/8000 |
+| `CLASSIFY_FULL_FRAME` | Classify the whole frame (keep `true`) | true |
+| `CLASSIFIER_ENSEMBLE` | Average ResNet-50 with EfficientNet-B0 | true |
+| `CLASSIFIER_UNCERTAINTY_THRESHOLD` | Below this top-1 probability a result is uncertain | 0.40 |
+| `DETECTION_MODEL_PATH`, `CLASSIFICATION_MODEL_PATH`, `EFFICIENTNET_MODEL_PATH`, `EXTERIOR_MODEL_PATH`, `CLASSES_PATH` | Model file overrides | `models/...` |
+
+## Vision providers and failover
+
+```
+Gemini Flash  ->  Groq (key 1, then key 2)  ->  local ResNet-50 + EfficientNet-B0 only
+```
+
+- **One combined request per image** returns identification, exterior notes and interior/engine analysis as a single
+  JSON object (`src/vision_service.py`). The old per-purpose methods are views over that one cached result, so there
+  are no repeat API calls for the same image.
+- The image is resized (max 1024 px, JPEG q78) only for the API call; local models and the browser preview use the
+  original.
+- **Cache:** results are cached by a hash of the optimised image (`VISION_CACHE_SIZE`, `VISION_CACHE_TTL`).
+  Concurrent branches share one call. Failures are cached for 20 s so a down provider is not hammered.
+- **Failover:** each provider gets at most one attempt per image (Groq also fails over between its two keys, and
+  waits once if both are limited for <= 15 s). Quota/rate limits, timeouts, auth and server errors put a provider on a
+  cooldown (Google's/Groq's own retry hint when given, otherwise 15 s to 10 min), and later requests skip it.
+- If every provider fails, classifier and exterior results are still returned and `identification_source` is
+  `classifier_only`. `final_ai_verdict.provider_attempts` lists each provider tried and why it failed.
+- `GET /health` shows provider status (configured, cooldown, ok/failed counts), never keys. Keys are read only from
+  the environment and are scrubbed from logs and errors.
+
+## API
+
+- `POST /predict` multipart `file` (JPEG/PNG/WEBP/BMP, up to 25 MB). Optional query: `enable_groq_inspection`,
+  `enable_final_verdict`, `market_region`, `job_id` (for `/progress`).
+- `GET /progress/{job_id}`, `GET /health`, interactive docs at `/docs`.
+
+## Tests
 
 ```bash
-cp .env.example .env
+python -m pytest tests -q          # backend (includes mocked provider-chain and failover tests, no API quota used)
+cd frontend && npm run lint && npm run build
 ```
 
-```ini
-GROQ_API_KEY=your_primary_groq_api_key
-GROQ_BACKUP_API_KEY=your_backup_groq_api_key
-DEFAULT_MARKET_REGION=India
-DEFAULT_CURRENCY=INR
-```
+## Repository hygiene
 
-### 3. Frontend Setup
+`.env`, datasets (Stanford Cars archives and folders), zips and local debug images are git-ignored. Model weights
+under `models/` are tracked (largest is about 96 MB; GitHub's hard limit is 100 MB per file).
 
-The built frontend is pre-compiled inside `frontend/dist` and served automatically by FastAPI at `/`. To build from source:
+## Known limitations
 
-```bash
-cd frontend
-npm install
-npm run build
-cd ..
-```
-
-### 4. Run the Server
-
-```bash
-python run_server.py
-# or: uvicorn api:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Open your browser at **`http://localhost:8000`** to experience the full application.
-
----
-
-## 🧪 Testing
-
-The test suite covers the entire pipeline across 69 comprehensive test cases:
-
-```bash
-pytest
-```
-
-```
-================= 69 passed in ~60s =================
-- tests/test_api.py (Endpoints, health, predict)
-- tests/test_components.py (Detector, classifier, feature extraction)
-- tests/test_image_quality_engine.py (Part 2 Assessor + Adaptive Enhancer)
-- tests/test_multimodal_architecture.py (Part 1 3-Branch Concurrent Pipeline)
-- tests/test_prediction_comparator.py (Part 3 Dual-Image Route Comparator)
-- tests/test_vehicle_intelligence.py (Part 4 Specs & Market Valuation)
-```
-
----
-
-## 📡 API Reference
-
-### Health Check
-`GET /health`
-```json
-{
-  "status": "healthy",
-  "device": "cpu",
-  "models": {
-    "detector": "YOLOv8n",
-    "classifier": "ResNet50",
-    "exterior_segmentation": "YOLO11n-seg",
-    "image_quality_engine": "Active (Part 2 Assessor + Adaptive Enhancer)",
-    "prediction_comparison_engine": "Active (Part 3 Comparator + Intelligent Selection)",
-    "vehicle_intelligence_engine": "Active (Part 4 Specifications & Market Valuation Engine)"
-  }
-}
-```
-
-### Inference & Perception
-`POST /predict` or `POST /analyze`
-- **Body**: `multipart/form-data` with `file: UploadFile`
-- **Parameters**:
-  - `conf_threshold` (float, default: 0.25)
-  - `apply_preprocessing` (bool, default: true)
-  - `enable_multimodal` (bool, default: true)
-  - `enable_quality_enhancement` (bool, default: true)
-  - `enable_prediction_comparison` (bool, default: true)
-  - `market_region` (str, default: "India")
-  - `currency` (str, default: "INR")
-
----
-
-## 📦 Model Weights Included
-
-- **`models/resnet50_best.pth`**: Stanford Cars vehicle make/model/year classifier (~91.5 MB).
-- **`models/detection/yolov8n.pt`**: YOLOv8 vehicle detector (~6.5 MB).
-- **`exterior_best.pt`**: YOLO11n-seg trained on Carparts-Seg 23 exterior classes (~6.0 MB).
-- **`models/classes.json`**: Stanford Cars 196 class definitions.
-
----
-
-## 👥 Authors & Attribution
-
-Developed for **CV Hackathon '26** by [@sidd-cr7](https://github.com/sidd-cr7).  
-Architecture: Multi-Model Computer Vision & Editorial Surrealism.
+- Classifier coverage is the 196 Stanford Cars classes; accuracy on unseen photos is about 37% top-1 / 71% top-5.
+- Specifications and valuations exist only for models present in `data/automotive_reference_data.json`.
+- Free-tier quotas (Gemini and Groq) can run out; the app then reports classifier-only results and says so.
+- Gemini's year estimates can be a few years off, and its identification has no calibrated confidence. Treat it as an informed guess.
+- Provider output is not verified against any database.

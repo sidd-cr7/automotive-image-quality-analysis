@@ -35,6 +35,7 @@ export default function UploadArea({
     if (e.target.files && e.target.files[0]) {
       handleFile(e.target.files[0]);
     }
+    e.target.value = '';
   };
 
   const handleFile = (file) => {
@@ -42,40 +43,11 @@ export default function UploadArea({
       alert('Please upload a valid image file (JPEG, PNG, WEBP, BMP).');
       return;
     }
+    if (file.size > 20 * 1024 * 1024) {
+      alert(`This image is ${(file.size / 1048576).toFixed(1)} MB. The maximum is 20 MB.`);
+      return;
+    }
     onImageSelected(file);
-  };
-
-  const handleSampleClick = () => {
-    // Generate a clean test canvas vehicle image for instant testing
-    const canvas = document.createElement('canvas');
-    canvas.width = 400;
-    canvas.height = 300;
-    const ctx = canvas.getContext('2d');
-    
-    // Warm vintage gradient background
-    const grad = ctx.createLinearGradient(0, 0, 400, 300);
-    grad.addColorStop(0, '#EAE3D2');
-    grad.addColorStop(1, '#C8BDA5');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 400, 300);
-
-    // Draw stylized mechanical vehicle outline
-    ctx.fillStyle = '#176B70';
-    ctx.fillRect(70, 110, 260, 80);
-    ctx.fillStyle = '#20201E';
-    ctx.beginPath();
-    ctx.arc(120, 190, 26, 0, Math.PI * 2);
-    ctx.arc(280, 190, 26, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#F28B45';
-    ctx.font = 'bold 15px "Space Mono", monospace';
-    ctx.fillText('AUTOMOTIVE TEST PATTERN', 80, 155);
-
-    canvas.toBlob((blob) => {
-      const sampleFile = new File([blob], 'automotive_test_specimen.jpg', { type: 'image/jpeg' });
-      onImageSelected(sampleFile);
-    }, 'image/jpeg', 0.95);
   };
 
   return (
@@ -173,16 +145,6 @@ export default function UploadArea({
         )}
       </div>
 
-      {/* Quick Test Sample Helper */}
-      {!imagePreview && (
-        <div style={styles.quickSampleRow}>
-          <span style={styles.sampleHint}>No image ready?</span>
-          <button style={styles.sampleBtn} onClick={handleSampleClick} className="interactive-target">
-            Load Test Specimen
-          </button>
-        </div>
-      )}
-
       {/* Error Banner */}
       {errorMessage && (
         <div style={styles.errorBanner}>
@@ -197,7 +159,7 @@ export default function UploadArea({
 const styles = {
   wrapper: {
     width: '100%',
-    maxWidth: '380px',
+    maxWidth: '100%',
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',

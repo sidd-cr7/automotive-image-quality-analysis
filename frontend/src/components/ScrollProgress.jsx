@@ -1,47 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
+/* Thin reading-progress bar. Updates a transform via requestAnimationFrame (no React re-renders). */
 export default function ScrollProgress() {
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const barRef = useRef(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (totalHeight > 0) {
-        const currentProgress = (window.scrollY / totalHeight) * 100;
-        setScrollProgress(Math.min(100, Math.max(0, currentProgress)));
-      } else {
-        setScrollProgress(0);
-      }
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, window.scrollY / total)) : 0;
+      if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
     };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, []);
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '3px',
-        backgroundColor: 'rgba(32, 32, 30, 0.05)',
-        zIndex: 99990,
-        pointerEvents: 'none',
-      }}
-    >
-      <div
-        style={{
-          width: `${scrollProgress}%`,
-          height: '100%',
-          background: 'linear-gradient(90deg, var(--accent-petrol-teal) 0%, var(--accent-tangerine) 100%)',
-          transition: 'width 0.1s cubic-bezier(0.16, 1, 0.3, 1)',
-          boxShadow: '0 0 8px rgba(242, 139, 69, 0.5)',
-        }}
-      />
+    <div className="scroll-progress" aria-hidden="true">
+      <div ref={barRef} className="scroll-progress-bar" />
     </div>
   );
 }
