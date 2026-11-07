@@ -682,6 +682,9 @@ class MultiModelOrchestrator:
         else:
             source, confidence, uncertain = "classifier_only", round(b1_conf, 4), primary_b1.get("is_uncertain", False)
             note = "Local classifier result only. No vision provider was available for this image."
+        scene = verdict.get("scene_type")
+        if used and scene in ("engine_bay", "interior") and norm(final_make) == "unidentifiedvehicle":
+            note = f"This is {'an engine-bay' if scene == 'engine_bay' else 'an interior'} photo; the vehicle itself cannot be identified from it."
         model_known = bool(final_model) and norm(final_model) not in ("unknown", "unidentified")
         conflict = bool(used and clf_make and (
             norm(final_make) != norm(clf_make) or (model_known and norm(final_model) != norm(clf_model))))
@@ -698,6 +701,7 @@ class MultiModelOrchestrator:
         return {
             "make": final_make,
             "model": final_model if model_known else None,
+            "scene_type": scene,
             "model_known": model_known,
             "identity_conflict": conflict,
             "valuation_eligible": not blocker,
@@ -823,6 +827,8 @@ class MultiModelOrchestrator:
 
             # Part 4: Vehicle Specifications & Current Market Price Intelligence
             "enhancement_visuals": MultiModelOrchestrator._enhancement_visuals(original_image, enhancement),
+            "scene_type": b3.get("predictions", {}).get("scene_type"),
+            "engine_details": b3.get("predictions", {}).get("engine_details"),
             "vehicle_specifications": vehicle_specifications or {},
             "market_valuation": market_valuation or {},
 

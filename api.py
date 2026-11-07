@@ -163,6 +163,7 @@ class VehicleIdentityModel(BaseModel):
     make: str
     model: Optional[str] = None  # None: only the manufacturer is known
     model_known: bool = True
+    scene_type: Optional[str] = None
     identity_conflict: bool = False
     valuation_eligible: bool = False
     valuation_blocker: str = ""
@@ -237,6 +238,8 @@ class PredictResponse(BaseModel):
     status: str
     # Real original / enhanced frames from the existing enhancer (small JPEG data URLs), or None.
     enhancement_visuals: Optional[Dict[str, Any]] = None
+    scene_type: Optional[str] = None  # exterior | engine_bay | interior | mixed | other (vision model)
+    engine_details: Optional[Dict[str, Any]] = None  # configuration / cylinders / evidence, when an engine is shown
     image_dimensions: Dict[str, int]
     vehicles_detected: int
     predictions_count: int

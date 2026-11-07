@@ -38,7 +38,7 @@ from .groq_service import GroqService, GroqServiceError, _redact, _cooldown_seco
 
 logger = logging.getLogger("autovision.vision")
 
-PROMPT_VERSION = "v2"
+PROMPT_VERSION = "v3"
 FAILURE_CACHE_SECONDS = 20.0
 
 # The frame the orchestrator is currently analysing (the original, un-enhanced upload).
@@ -47,10 +47,30 @@ CURRENT_FRAME: contextvars.ContextVar[Optional[np.ndarray]] = contextvars.Contex
 REQUEST_ID: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("vision_request", default=None)
 
 COMBINED_PROMPT = """You are an expert automotive vision analyst. Examine this single image and answer everything below in ONE JSON object.
-Be factual and specific. Work from MULTIPLE independent visual cues (grille and lamp signature, headlamp/taillamp shape, body proportions, roofline, badges, wheels, plate text) and list them in visible_evidence. Name the exact model whenever at least two cues agree; if the cues only support the manufacturer, give the make and set model to null. Give the generation and a year range when you can. Never invent badges, trims or specifications.
+Be factual and specific. Never invent badges, trims or specifications; if something is not visible, say so.
+
+STEP 1 - decide scene_type: exterior | engine_bay | interior | mixed | other.
+
+IF THE SCENE IS EXTERIOR (or mixed): identify the vehicle from MULTIPLE independent cues (grille and lamp signature, headlamp/taillamp shape,
+body proportions, roofline, badges, wheels, plate text) and list them in visible_evidence. Name the exact model when at least two cues agree;
+if the cues only support the manufacturer, give the make and set model to null. Give the generation and a year range when you can.
+
+IF THE SCENE IS ENGINE_BAY OR AN ISOLATED ENGINE: describe the ENGINE, not a car.
+- engine.configuration (V8, V6, inline-4, flat-6, rotary, ...) and engine.cylinders, with engine.cylinder_count_evidence explaining HOW you counted
+  (number of visible valve covers / cylinder banks, throttle bodies or intake runners, exhaust header pipes, coil packs, spark plug leads).
+- engine.aspiration (naturally aspirated, turbocharged, supercharged, or null when not visible) and notable parts (intake plenum or velocity stacks,
+  throttle bodies, headers, belts, alternator, oil cooler, etc.) in engine_components.
+- engine.manufacturer_cues: ANY legible logo or text (for example an engine maker's name on a cam cover). IMPORTANT: the company that built an engine
+  is NOT necessarily the vehicle's make, and a standalone engine is not a vehicle. Set vehicle.make and vehicle.model to null unless a vehicle badge,
+  body panel or other vehicle-level evidence is visible.
+
+IF THE SCENE IS INTERIOR: list what is visible (steering wheel and its badge, instrument cluster, infotainment screen and its style, seats and
+upholstery, trim, gear selector, pedals) in interior_components with short details, and list brand or model hints in identity_cues. A steering-wheel
+badge or an unmistakable model-specific design counts as evidence for vehicle.make; give a model only if the design clearly supports it.
 
 Respond strictly as JSON with exactly these keys:
 {
+  "scene_type": "exterior | engine_bay | interior | mixed | other",
   "vehicle": {
     "make": "string or null",
     "model": "string or null",
@@ -59,11 +79,19 @@ Respond strictly as JSON with exactly these keys:
     "generation": "string or null (e.g. 3rd generation)",
     "body_style": "string or null",
     "identification_certainty": "low | medium | high",
-    "visible_evidence": ["badges, grille, lamps, plate text, body shape actually visible"],
+    "visible_evidence": ["cues actually visible"],
     "alternatives": ["other plausible 'Make Model' candidates, if unsure"]
   },
+  "engine": {
+    "configuration": "string or null",
+    "cylinders": integer or null,
+    "cylinder_count_evidence": ["how the cylinder count was determined"],
+    "aspiration": "string or null",
+    "manufacturer_cues": ["legible logos or text on the engine"],
+    "notes": "string"
+  },
   "exterior": {
-    "notes": "brief objective assessment of the exterior",
+    "notes": "brief objective assessment of the exterior (empty if not visible)",
     "visible_modifications": ["aftermarket modifications actually visible"],
     "missed_cues": ["notable exterior items worth mentioning"]
   },
@@ -76,7 +104,7 @@ Respond strictly as JSON with exactly these keys:
     "identity_cues": ["interior or engine details that hint at make/model/trim"],
     "uncertainty": "what could not be verified from this image"
   },
-  "summary": "two sentences: what the vehicle appears to be and how sure you are"
+  "summary": "two sentences: what the image shows and how sure you are"
 }"""
 
 
@@ -330,6 +358,8 @@ class VisionService(GroqService):
                     "errors": [f"Vision providers unavailable: {a['error']}"]}
         ie = a["result"].get("interior_engine") or {}
         return {"status": "success", "provider": a["provider"],
+                "scene_type": a["result"].get("scene_type"),
+                "engine_details": a["result"].get("engine") or None,
                 "view_perspective": ie.get("view_perspective", "unknown"),
                 "is_interior_visible": bool(ie.get("is_interior_visible", False)),
                 "is_engine_visible": bool(ie.get("is_engine_visible", False)),
@@ -361,6 +391,9 @@ class VisionService(GroqService):
             # borrow the classifier's model (it may belong to a different manufacturer).
             model = vmodel or None
             year = v.get("year_estimate") if vmodel else None
+        elif res.get("scene_type") in ("engine_bay", "interior"):
+            # An engine bay / cabin photo says nothing about which car it is; do not fall back to the classifier's guess.
+            make, model, year = "Unidentified vehicle", None, None
         else:
             make, model, year = top.get("make", "Unknown"), top.get("model"), top.get("year")
         changed = bool(vmake) and (norm(make) != norm(top.get("make")) or (bool(model) and norm(model) not in (norm(top.get("model")) + norm(top.get("label")))))
@@ -373,6 +406,7 @@ class VisionService(GroqService):
         return {
             "verdict_status": "provider_assessed",
             "verdict_provider": a["provider"],
+            "scene_type": res.get("scene_type"),
             "provider_attempts": a["attempts"],
             "provider_cached": a["cached"],
             "final_make": make, "final_model": model, "final_estimated_year": year,

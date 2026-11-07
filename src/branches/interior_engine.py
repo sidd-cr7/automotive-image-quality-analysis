@@ -125,6 +125,8 @@ class InteriorEngineBranch:
             "interior_components": raw_res.get("interior_components", []),
             "engine_components": raw_res.get("engine_components", []),
             "estimated_identity_cues": raw_res.get("estimated_identity_cues", []),
+            "scene_type": raw_res.get("scene_type"),
+            "engine_details": raw_res.get("engine_details"),
         }
 
         evidence = {

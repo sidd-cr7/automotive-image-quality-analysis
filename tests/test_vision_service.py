@@ -162,3 +162,25 @@ def test_cached_flag_means_served_from_an_earlier_request():
         vs.REQUEST_ID.reset(tok)
     assert first["cached"] is False and same_request["cached"] is False and later["cached"] is True
     assert svc.calls["gemini"] == 1
+
+
+def _scene_result(scene, make=None, model=None):
+    return {**RESULT, "scene_type": scene, "vehicle": {**RESULT["vehicle"], "make": make, "model": model},
+            "engine": {"configuration": "V8", "cylinders": 8, "cylinder_count_evidence": ["8 velocity stacks"], "manufacturer_cues": ["YAMAHA"]}}
+
+
+def test_engine_photo_is_not_labelled_with_a_vehicle_make_or_the_classifier_guess():
+    svc = make()
+    svc._call_gemini = lambda b64: (_scene_result("engine_bay"), "gemini")
+    clf = {"predictions": [{"make": "Chevrolet", "model": "Sonic Sedan", "label": "x", "year": 2012}]}
+    v = svc.generate_final_verdict(clf, {"predictions": {}}, {}, IMG)
+    assert v["final_make"] == "Unidentified vehicle" and v["final_model"] is None and v["scene_type"] == "engine_bay"
+    ie = svc.analyze_interior_and_engine(IMG)
+    assert ie["scene_type"] == "engine_bay" and ie["engine_details"]["cylinders"] == 8 and ie["engine_details"]["configuration"] == "V8"
+
+
+def test_exterior_photo_still_falls_back_to_classifier_when_the_vision_model_names_nothing():
+    svc = make()
+    svc._call_gemini = lambda b64: (_scene_result("exterior"), "gemini")
+    clf = {"predictions": [{"make": "Chevrolet", "model": "Sonic Sedan", "label": "x", "year": 2012}]}
+    assert svc.generate_final_verdict(clf, {"predictions": {}}, {}, IMG)["final_make"] == "Chevrolet"

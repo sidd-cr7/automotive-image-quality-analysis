@@ -139,7 +139,8 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
 
   const displayMake = vehicle.make || specs.make || 'Unidentified Vehicle';
   const modelKnown = vehicle.model_known !== false && !!vehicle.model;
-  const displayModel = modelKnown ? vehicle.model : 'Not identified (manufacturer only)';
+  const nonExterior = resultData.scene_type === 'engine_bay' || resultData.scene_type === 'interior';
+  const displayModel = modelKnown ? vehicle.model : (nonExterior ? 'Not identifiable from this view' : 'Not identified (manufacturer only)');
   const displayConfidence = vehicle.confidence !== undefined ? vehicle.confidence : null;
   const confidencePercent = displayConfidence !== null ? (displayConfidence * 100).toFixed(1) : null;
 
@@ -246,7 +247,7 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
           </span>
         )}
         <div style={styles.brandRow}>
-          <h2 style={styles.makeTitle}>{isUncertain ? `${displayMake}?` : displayMake}</h2>
+          <h2 style={styles.makeTitle}>{isUncertain && displayMake !== 'Unidentified vehicle' ? `${displayMake}?` : displayMake}</h2>
           {!isUncertain && (
             <div style={styles.brandLogoCircle}>
               {renderBrandBadge(displayMake)}
@@ -292,6 +293,50 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
             {vehicle.identification_note.toUpperCase()}
           </p>
         )}
+
+        {(() => {
+          const scene = resultData.scene_type;
+          const eng = resultData.engine_details || {};
+          const engInfo = resultData.visible_engine_info || {};
+          const inter = resultData.interior_analysis || {};
+          const showEngine = scene === 'engine_bay' || scene === 'mixed' || engInfo.is_engine_visible;
+          const showInterior = scene === 'interior' || scene === 'mixed' || inter.is_interior_visible;
+          if (!showEngine && !showInterior) return null;
+          const lbl = { fontFamily: 'var(--font-mono)', fontSize: '0.64rem', letterSpacing: '0.1em', color: 'var(--text-ink-muted)' };
+          const row = { display: 'flex', gap: 8, justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', padding: '6px 0', fontSize: '0.8rem' };
+          const seen = (list) => (list || []).filter((c) => c && c.visible !== false && c.component);
+          const engParts = seen(engInfo.engine_components);
+          const intParts = seen(inter.interior_components);
+          return (
+            <div style={{ border: '1px solid var(--border-medium)', background: 'rgba(241,235,221,0.5)', padding: '12px 14px', margin: '0 0 16px' }}>
+              <div style={{ ...lbl, color: 'var(--accent-petrol-teal)', fontWeight: 700, marginBottom: 8 }}>
+                {scene === 'engine_bay' ? 'ENGINE BAY VIEW' : scene === 'interior' ? 'INTERIOR VIEW' : 'ENGINE / INTERIOR FINDINGS'} · AI-ESTIMATED FROM THE PHOTO · UNVERIFIED
+              </div>
+              {showEngine && (
+                <div style={{ marginBottom: showInterior ? 12 : 0 }}>
+                  {(eng.configuration || eng.cylinders) && (
+                    <div style={row}><span style={lbl}>ENGINE</span><strong>{[eng.configuration, eng.cylinders ? `${eng.cylinders} cylinders` : null].filter(Boolean).join(' · ')}</strong></div>
+                  )}
+                  {eng.cylinder_count_evidence?.length > 0 && <div style={row}><span style={lbl}>HOW COUNTED</span><span style={{ textAlign: 'right' }}>{eng.cylinder_count_evidence.join('; ')}</span></div>}
+                  {eng.aspiration && <div style={row}><span style={lbl}>ASPIRATION</span><span>{eng.aspiration}</span></div>}
+                  {eng.manufacturer_cues?.length > 0 && <div style={row}><span style={lbl}>LOGOS / TEXT SEEN</span><span style={{ textAlign: 'right' }}>{eng.manufacturer_cues.join(', ')}</span></div>}
+                  {engParts.length > 0 && <div style={row}><span style={lbl}>VISIBLE PARTS</span><span style={{ textAlign: 'right' }}>{engParts.map((c) => c.component).join(', ')}</span></div>}
+                  {eng.notes && <div style={{ ...row, flexDirection: 'column' }}><span style={lbl}>NOTES</span><span>{eng.notes}</span></div>}
+                </div>
+              )}
+              {showInterior && (
+                <div>
+                  {intParts.length > 0 && <div style={row}><span style={lbl}>VISIBLE</span><span style={{ textAlign: 'right' }}>{intParts.map((c) => c.component).join(', ')}</span></div>}
+                  {intParts.filter((c) => c.details && !/not visible/i.test(c.details)).slice(0, 5).map((c) => (
+                    <div key={c.component} style={row}><span style={lbl}>{String(c.component).toUpperCase()}</span><span style={{ textAlign: 'right' }}>{c.details}</span></div>
+                  ))}
+                  {inter.identity_cues?.length > 0 && <div style={row}><span style={lbl}>BRAND / MODEL CUES</span><span style={{ textAlign: 'right' }}>{inter.identity_cues.join('; ')}</span></div>}
+                </div>
+              )}
+              {(engInfo.notes || inter.notes) && <div style={{ ...lbl, marginTop: 8, letterSpacing: '0.04em', textTransform: 'none' }}>{engInfo.notes || inter.notes}</div>}
+            </div>
+          );
+        })()}
 
         {/* Spec Metrics Row */}
         <div style={styles.metricsGrid}>
