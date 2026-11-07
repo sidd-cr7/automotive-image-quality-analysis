@@ -37,7 +37,7 @@ def dummy_image() -> np.ndarray:
 # -----------------------------------------------------------------------------
 def test_correct_specification_retrieval():
     """Verify accurate extraction of engine, displacement, power, torque, and drivetrain for cataloged vehicle."""
-    service = VehicleIntelligenceService()
+    service = VehicleIntelligenceService(allow_formula_estimates=True)
 
     spec = service.get_specifications(
         make="BMW",
@@ -65,7 +65,7 @@ def test_correct_specification_retrieval():
 # -----------------------------------------------------------------------------
 def test_unknown_vehicle_variant():
     """Exact variant unconfirmed: only model-level facts are reported. No default engine is assumed."""
-    service = VehicleIntelligenceService()
+    service = VehicleIntelligenceService(allow_formula_estimates=True)
 
     spec = service.get_specifications(
         make="BMW",
@@ -86,7 +86,7 @@ def test_unknown_vehicle_variant():
 # -----------------------------------------------------------------------------
 def test_missing_specification_fields():
     """Uncataloged or unknown vehicles do not have fabricated specifications."""
-    service = VehicleIntelligenceService()
+    service = VehicleIntelligenceService(allow_formula_estimates=True)
 
     spec = service.get_specifications(
         make="AcmeMotors",
@@ -107,7 +107,7 @@ def test_missing_specification_fields():
 # -----------------------------------------------------------------------------
 def test_market_price_retrieval():
     """Verify calculated indicative secondary market price range for cataloged vehicle."""
-    service = VehicleIntelligenceService()
+    service = VehicleIntelligenceService(allow_formula_estimates=True)
 
     val = service.estimate_market_value(
         make="BMW",
@@ -132,7 +132,7 @@ def test_market_price_retrieval():
 # -----------------------------------------------------------------------------
 def test_unavailable_pricing_sources():
     """When model or pricing indices are unavailable, transparently mark as unavailable without fabricating."""
-    service = VehicleIntelligenceService()
+    service = VehicleIntelligenceService(allow_formula_estimates=True)
 
     val = service.estimate_market_value(
         make="UnknownMake",
@@ -154,7 +154,7 @@ def test_unavailable_pricing_sources():
 # -----------------------------------------------------------------------------
 def test_unknown_mileage_and_condition():
     """Explicitly list assumptions and widen price range when mileage or condition are unknown."""
-    service = VehicleIntelligenceService()
+    service = VehicleIntelligenceService(allow_formula_estimates=True)
 
     # Unknown mileage & condition
     val_unknown = service.estimate_market_value(
@@ -189,7 +189,7 @@ def test_unknown_mileage_and_condition():
 # -----------------------------------------------------------------------------
 def test_regional_currency_handling():
     """Verify multi-region support with correct currencies (INR, USD, GBP, EUR)."""
-    service = VehicleIntelligenceService()
+    service = VehicleIntelligenceService(allow_formula_estimates=True)
 
     # India
     val_in = service.estimate_market_value("Toyota", "Camry Sedan", 2018, market_region="India")

@@ -138,7 +138,8 @@ class VehicleSpecificationsModel(BaseModel):
     body_type: Optional[str] = None
     seating_capacity: Optional[int] = None
     source: str
-    verification_status: str  # "verified", "estimated", "unavailable"
+    verification_status: str  # database_verified | database_multiple_variants | model_level_only | verified | unavailable
+    variants: List[Dict[str, Any]] = []  # every real configuration the database lists for this model year
 
 
 class MarketValuationModel(BaseModel):
@@ -234,6 +235,8 @@ class FinalAIVerdictModel(BaseModel):
 
 class PredictResponse(BaseModel):
     status: str
+    # Real original / enhanced frames from the existing enhancer (small JPEG data URLs), or None.
+    enhancement_visuals: Optional[Dict[str, Any]] = None
     image_dimensions: Dict[str, int]
     vehicles_detected: int
     predictions_count: int

@@ -17,6 +17,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 import json
 import logging
+import os
 from pathlib import Path
 import re
 import time
@@ -110,6 +111,7 @@ class VehicleIntelligenceService:
         cache_ttl_seconds: int = VALUATION_CACHE_TTL_SECONDS,
         enable_specifications: bool = ENABLE_VEHICLE_SPECIFICATIONS,
         enable_valuation: bool = ENABLE_MARKET_VALUATION,
+        allow_formula_estimates: Optional[bool] = None,
     ):
         self.db_path = Path(db_path or AUTOMOTIVE_DB_PATH)
         self.default_region = default_region
@@ -117,6 +119,9 @@ class VehicleIntelligenceService:
         self.cache_ttl_seconds = cache_ttl_seconds
         self.enable_specifications = enable_specifications
         self.enable_valuation = enable_valuation
+        # Catalogue MSRP x depreciation is NOT market data. Off unless explicitly enabled (FORMULA_VALUATION=true).
+        self.allow_formula_estimates = (os.getenv('FORMULA_VALUATION', 'false').lower() in ('true', '1', 'yes')
+                                        if allow_formula_estimates is None else allow_formula_estimates)
 
         # In-memory caches: key -> (timestamp, data)
         self._spec_cache: Dict[str, Any] = {}
@@ -369,6 +374,10 @@ class VehicleIntelligenceService:
             )
         if year is None:
             return _unavailable("Market value unavailable: the exact model year could not be established, and age drives depreciation.")
+        if not self.allow_formula_estimates:
+            return _unavailable(
+                "Market valuation unavailable: insufficient verified market data. No licensed pricing source "
+                "(listings / dealer index) is configured, and catalogue list prices are not used as a valuation.")
 
         gens = matched_vehicle.get("generations", [])
         matched_gen = self._find_generation(gens, year, generation)
@@ -555,6 +564,24 @@ class VehicleIntelligenceService:
             ).to_dict()
 
         # Safely execute market valuation lookup
+        # Real, model-specific specifications (exact make + model + year only). Nothing is guessed.
+        if make and model and year:
+            from src.spec_provider import lookup_epa_variants
+            epa = lookup_epa_variants(make, model, int(year))
+            if epa:
+                def agree(k):
+                    vals = {v.get(k) for v in epa}
+                    return vals.pop() if len(vals) == 1 else None
+                eng = specs_dict.get("engine") or {}
+                disp = agree("displacement_l")
+                eng.update(displacement=f"{disp:g} L" if disp else None, cylinders=agree("cylinders"), fuel_type=agree("fuel_type"))
+                specs_dict["engine"] = eng
+                specs_dict["drivetrain"] = agree("drive")
+                specs_dict["transmission"] = agree("transmission")
+                specs_dict["variants"] = epa
+                specs_dict["verification_status"] = "database_verified" if len(epa) == 1 else "database_multiple_variants"
+                specs_dict["source"] = "US EPA fueleconomy.gov database (exact make, model and year match)"
+
         try:
             valuation = self.estimate_market_value(
                 make=make,

@@ -560,6 +560,7 @@ class MultiModelOrchestrator:
             total_time_ms=elapsed_total_ms,
             assessment=assessment,
             enhancement=enhancement,
+            original_image=image_rgb,
             image_versions=final_image_versions,
             prediction_comparison=comp_report,
             original_predictions={"vehicle_identification": b1_orig, "exterior_analysis": b2_orig, "interior_engine": b3_orig},
@@ -621,6 +622,43 @@ class MultiModelOrchestrator:
     # -------------------------------------------------------------------------
     # Consolidated Intelligence Synthesis
     # -------------------------------------------------------------------------
+    @staticmethod
+    def _enhancement_visuals(original: Optional[np.ndarray], enhancement: Any, max_dim: int = 640) -> Optional[Dict[str, Any]]:
+        """The pipeline's real original and enhanced frames as small JPEG data URLs (same display size).
+
+        Nothing is re-processed here: `enhancement.enhanced_image` is what the existing adaptive enhancer produced.
+        """
+        if original is None or enhancement is None:
+            return None
+        try:
+            import base64
+            import cv2
+            enhanced = enhancement.enhanced_image
+            h, w = original.shape[:2]
+            scale = min(1.0, max_dim / float(max(h, w)))
+            size = (max(1, int(round(w * scale))), max(1, int(round(h * scale))))
+
+            def _url(img: np.ndarray) -> str:
+                small = cv2.resize(img, size, interpolation=cv2.INTER_AREA)
+                ok, buf = cv2.imencode(".jpg", cv2.cvtColor(small, cv2.COLOR_RGB2BGR), [int(cv2.IMWRITE_JPEG_QUALITY), 82])
+                return "data:image/jpeg;base64," + base64.b64encode(buf.tobytes()).decode() if ok else ""
+
+            applied = [r.to_dict() for r in enhancement.enhancements_applied]
+            return {
+                "original": _url(original),
+                "enhanced": _url(enhanced),
+                "display_width": size[0], "display_height": size[1],
+                "original_dimensions": {"width": int(w), "height": int(h)},
+                "enhanced_dimensions": {"width": int(enhanced.shape[1]), "height": int(enhanced.shape[0])},
+                "enhancements_applied": applied,
+                "enhancement_applied": bool(applied),
+                "quality_gain": round(float(enhancement.quality_gain), 2),
+                "intermediate_maps": [],  # the enhancer does not retain illumination / reflectance / edge maps
+            }
+        except Exception as e:  # never let a preview break a prediction
+            logger.warning(f"Enhancement preview unavailable: {e}")
+            return None
+
     @staticmethod
     def _vehicle_identity_block(final_make, final_model, final_year, generation, primary_b1, b1_conf, verdict):
         """Build the `vehicle` block and say who produced the identification.
@@ -692,6 +730,7 @@ class MultiModelOrchestrator:
         selected_predictions: Optional[Dict[str, Any]] = None,
         vehicle_specifications: Optional[Dict[str, Any]] = None,
         market_valuation: Optional[Dict[str, Any]] = None,
+        original_image: Optional[np.ndarray] = None,
     ) -> Dict[str, Any]:
         """Synthesize all perception branches, quality assessments, prediction comparisons, and verdict verification."""
         b1_preds = b1.get("predictions", [])
@@ -783,6 +822,7 @@ class MultiModelOrchestrator:
             ),
 
             # Part 4: Vehicle Specifications & Current Market Price Intelligence
+            "enhancement_visuals": MultiModelOrchestrator._enhancement_visuals(original_image, enhancement),
             "vehicle_specifications": vehicle_specifications or {},
             "market_valuation": market_valuation or {},
 

@@ -38,7 +38,7 @@ from .groq_service import GroqService, GroqServiceError, _redact, _cooldown_seco
 
 logger = logging.getLogger("autovision.vision")
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 FAILURE_CACHE_SECONDS = 20.0
 
 # The frame the orchestrator is currently analysing (the original, un-enhanced upload).
@@ -47,7 +47,7 @@ CURRENT_FRAME: contextvars.ContextVar[Optional[np.ndarray]] = contextvars.Contex
 REQUEST_ID: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("vision_request", default=None)
 
 COMBINED_PROMPT = """You are an expert automotive vision analyst. Examine this single image and answer everything below in ONE JSON object.
-Be factual. If something is not visible or you are unsure, say so. Never invent badges, trims or specifications.
+Be factual and specific. Work from MULTIPLE independent visual cues (grille and lamp signature, headlamp/taillamp shape, body proportions, roofline, badges, wheels, plate text) and list them in visible_evidence. Name the exact model whenever at least two cues agree; if the cues only support the manufacturer, give the make and set model to null. Give the generation and a year range when you can. Never invent badges, trims or specifications.
 
 Respond strictly as JSON with exactly these keys:
 {
@@ -55,7 +55,8 @@ Respond strictly as JSON with exactly these keys:
     "make": "string or null",
     "model": "string or null",
     "year_estimate": integer or null,
-    "generation": "string or null",
+    "year_range": [first_year, last_year] or null,
+    "generation": "string or null (e.g. 3rd generation)",
     "body_style": "string or null",
     "identification_certainty": "low | medium | high",
     "visible_evidence": ["badges, grille, lamps, plate text, body shape actually visible"],

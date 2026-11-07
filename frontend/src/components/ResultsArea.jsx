@@ -214,6 +214,31 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
           )}
         </div>
 
+        {resultData.enhancement_visuals?.original && resultData.enhancement_visuals?.enhanced && (() => {
+          const ev = resultData.enhancement_visuals;
+          const techniques = (ev.enhancements_applied || []).map((e) => e.technique || e.name).filter(Boolean);
+          const label = { fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.12em', color: 'var(--text-ink-muted)' };
+          const img = { width: '100%', height: 'auto', display: 'block', aspectRatio: `${ev.display_width} / ${ev.display_height}`, objectFit: 'cover', border: '1px solid var(--border-medium)' };
+          return (
+            <div style={{ margin: '4px 0 18px' }}>
+              <div style={{ ...label, marginBottom: 8 }}>IMAGE ENHANCEMENT · BEFORE / AFTER</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <figure style={{ margin: 0 }}>
+                  <img src={ev.original} alt="Original uploaded image" style={img} />
+                  <figcaption style={label}>BEFORE · ORIGINAL · {ev.original_dimensions?.width}×{ev.original_dimensions?.height}</figcaption>
+                </figure>
+                <figure style={{ margin: 0 }}>
+                  <img src={ev.enhanced} alt="Enhanced image from the pipeline" style={img} />
+                  <figcaption style={label}>AFTER · ENHANCED · {ev.enhanced_dimensions?.width}×{ev.enhanced_dimensions?.height}</figcaption>
+                </figure>
+              </div>
+              <div style={{ ...label, marginTop: 8 }}>
+                {ev.enhancement_applied ? `YOUR PHOTO NEEDED FIXING. APPLIED: ${techniques.join(' + ').toUpperCase() || 'ADAPTIVE ENHANCEMENT'}${typeof resultData.image_quality?.overall_score === 'number' ? ` · QUALITY SCORE ${resultData.image_quality.overall_score.toFixed(1)} → ${(resultData.image_quality.overall_score + ev.quality_gain).toFixed(1)}` : ''}` : 'PHOTO QUALITY WAS FINE: NO ENHANCEMENT WAS NEEDED (AFTER = BEFORE)'}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Brand Name & Logo Badge */}
         {isUncertain && (
           <span style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '0.66rem', letterSpacing: '0.14em', fontWeight: 700, background: 'var(--accent-tangerine)', color: 'var(--text-ink-black)', padding: '3px 8px', marginBottom: 6 }}>
@@ -290,6 +315,12 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
           </div>
         </div>
 
+        {specs.variants?.length > 0 && (
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.64rem', letterSpacing: '0.08em', color: 'var(--text-ink-muted)', margin: '0 0 14px' }}>
+            DATABASE (US EPA) · {specs.variants.length} CONFIGURATION{specs.variants.length > 1 ? 'S' : ''} FOR THIS MODEL YEAR; THE EXACT ONE IS NOT IDENTIFIABLE FROM A PHOTO: {specs.variants.map((v) => `${v.displacement_l ?? '?'}L ${v.cylinders ?? '?'}-CYL ${v.transmission ?? ''}`.toUpperCase()).join(' · ')}
+          </p>
+        )}
+
         {/* Real Top Predictions Ranking (if present in output) */}
         {topCandidates && topCandidates.length > 0 && (
           <div style={styles.topPredictionsContainer}>
@@ -330,7 +361,7 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
           <div style={styles.valuationBadge}>
             <DollarSign size={15} color="var(--accent-tangerine)" />
             <span style={styles.valuationText}>
-              <strong>Market value unavailable.</strong> {valuation.assumptions?.[0]?.replace(/^Market value unavailable:\s*/i, '') || 'No reliable pricing data for this vehicle.'}
+              <strong>Market valuation unavailable — insufficient verified market data.</strong> {valuation.assumptions?.[0]?.replace(/^Market (value|valuation) unavailable:\s*(insufficient verified market data\.\s*)?/i, '') || 'No reliable pricing data for this vehicle.'}
             </span>
           </div>
         )}
