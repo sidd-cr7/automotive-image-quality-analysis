@@ -4,6 +4,8 @@ import LandingView from './components/LandingView';
 import DetectView from './components/DetectView';
 import InfoModals from './components/InfoModals';
 import ScrollProgress from './components/ScrollProgress';
+import VisualOutputs from './components/VisualOutputs';
+import IntermediateRepresentations from './components/IntermediateRepresentations';
 
 // Elements that fade/slide in on scroll, and headings that get the text-reveal effect.
 const REVEAL_SELECTOR = [
@@ -73,6 +75,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [historyItems, setHistoryItems] = useState([]);
   const [analysis, setAnalysis] = useState(null);
+  const [visualItems, setVisualItems] = useState([]); // this session's real enhancement results (kept small)
 
   // Handle image selection in workspace
   const handleImageSelected = (file) => {
@@ -156,6 +159,9 @@ export default function App() {
         return;
       }
       setResultData(data);
+      if (data?.enhancement_visuals?.original) {
+        setVisualItems((prev) => [{ id: jobId, name: selectedFile.name, ev: data.enhancement_visuals, scoreBefore: data?.image_quality?.overall_score }, ...prev].slice(0, 6));
+      }
       setHistoryItems((prev) => [
         {
           make: data?.vehicle?.make || 'Vehicle',
@@ -190,8 +196,12 @@ export default function App() {
 
       {/* 2. Main Canvas (Landing View or Detection View) */}
       <main className="app-main-content">
-        <div key={activeTab === 'landing' ? 'landing' : 'detect'} className="page-enter">
-        {activeTab === 'landing' ? (
+        <div key={activeTab === 'landing' ? 'landing' : activeTab === 'visuals' ? 'visuals' : activeTab === 'intermediate' ? 'intermediate' : 'detect'} className="page-enter">
+        {activeTab === 'intermediate' ? (
+          <IntermediateRepresentations items={visualItems} onNavigateToDetect={() => setActiveTab('detect')} />
+        ) : activeTab === 'visuals' ? (
+          <VisualOutputs items={visualItems} onNavigateToDetect={() => setActiveTab('detect')} />
+        ) : activeTab === 'landing' ? (
           <LandingView onNavigateToDetect={() => setActiveTab('detect')} />
         ) : (
           <DetectView

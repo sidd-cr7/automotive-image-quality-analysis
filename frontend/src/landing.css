@@ -254,3 +254,6 @@
 .btn-editorial-teal:focus-visible, .ei-cta-btn:focus-visible, .btn-back:focus-visible, .sidebar-nav-btn:focus-visible, .mobile-nav-btn:focus-visible {
   outline: 2px solid var(--accent-tangerine); outline-offset: 3px;
 }
+
+/* Long sidebar labels (e.g. Intermediate Representations) wrap instead of overflowing */
+.sidebar-nav-label { text-align: center; line-height: 1.15; overflow-wrap: anywhere; }

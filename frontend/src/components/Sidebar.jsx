@@ -1,10 +1,12 @@
 import React from 'react';
-import { BookOpen, Scan, Clock, BarChart3, Info } from 'lucide-react';
+import { BookOpen, Scan, Clock, BarChart3, Info, Layers, Eye } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onTabChange }) {
   const navItems = [
     { id: 'landing', label: 'Story', icon: BookOpen },
     { id: 'detect', label: 'Detect', icon: Scan },
+    { id: 'visuals', label: 'Visuals', icon: Layers },
+    { id: 'intermediate', label: 'Intermediate Representations', mobileLabel: 'Maps', icon: Eye },
     { id: 'history', label: 'History', icon: Clock },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'about', label: 'About', icon: Info },
@@ -78,7 +80,7 @@ export default function Sidebar({ activeTab, onTabChange }) {
               title={item.label}
             >
               <Icon size={18} strokeWidth={isActive ? 2.2 : 1.6} />
-              <span className="mobile-nav-label">{item.label}</span>
+              <span className="mobile-nav-label">{item.mobileLabel || item.label}</span>
             </button>
           );
         })}
