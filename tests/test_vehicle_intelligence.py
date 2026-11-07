@@ -64,7 +64,7 @@ def test_correct_specification_retrieval():
 # 2. Unknown Vehicle Variant
 # -----------------------------------------------------------------------------
 def test_unknown_vehicle_variant():
-    """When exact variant is unconfirmed, system provides base generation specs and marks status as estimated."""
+    """Exact variant unconfirmed: only model-level facts are reported. No default engine is assumed."""
     service = VehicleIntelligenceService()
 
     spec = service.get_specifications(
@@ -74,10 +74,11 @@ def test_unknown_vehicle_variant():
         variant=None,  # Variant not provided
     )
 
-    assert spec.verification_status == "estimated"
-    assert spec.variant is not None
-    assert spec.engine.horsepower is not None
-    assert spec.engine.displacement is not None
+    assert spec.verification_status == "model_level_only"
+    assert spec.variant is None
+    assert spec.body_type is not None            # model-level fact
+    assert spec.engine.horsepower is None        # engine varies by variant: never assumed
+    assert spec.engine.displacement is None
 
 
 # -----------------------------------------------------------------------------

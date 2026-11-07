@@ -138,7 +138,8 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
   const providerName = vehicle.vision_provider ? vehicle.vision_provider.charAt(0).toUpperCase() + vehicle.vision_provider.slice(1) : 'vision';
 
   const displayMake = vehicle.make || specs.make || 'Unidentified Vehicle';
-  const displayModel = vehicle.model || specs.variant || 'Unknown Model';
+  const modelKnown = vehicle.model_known !== false && !!vehicle.model;
+  const displayModel = modelKnown ? vehicle.model : 'Not identified (manufacturer only)';
   const displayConfidence = vehicle.confidence !== undefined ? vehicle.confidence : null;
   const confidencePercent = displayConfidence !== null ? (displayConfidence * 100).toFixed(1) : null;
 
@@ -208,7 +209,7 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
           {specs.verification_status && (
             <span style={styles.verifiedStatusBadge}>
               <ShieldCheck size={12} color="var(--accent-petrol-teal)" />
-              <span>{specs.verification_status.toUpperCase()}</span>
+              <span>{specs.verification_status.replace(/_/g, ' ').toUpperCase()}</span>
             </span>
           )}
         </div>
@@ -256,9 +257,9 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
           </p>
         )}
 
-        {isGroqId && vehicle.classifier_top1 && (
+        {(isGroqId || vehicle.identity_conflict) && vehicle.classifier_top1 && (
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.64rem', letterSpacing: '0.08em', color: 'var(--text-ink-muted)', margin: '0 0 14px' }}>
-            CLASSIFIER'S OWN GUESS: {vehicle.classifier_top1.toUpperCase()} ({(vehicle.classifier_confidence * 100).toFixed(1)}%)
+            {vehicle.identity_conflict ? 'MODELS DISAGREE. CLASSIFIER SAYS' : "CLASSIFIER'S OWN GUESS"}: {vehicle.classifier_top1.toUpperCase()} ({(vehicle.classifier_confidence * 100).toFixed(1)}%)
           </p>
         )}
         {vehicle.identification_note && !isUncertain && (
@@ -270,7 +271,7 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
         {/* Spec Metrics Row */}
         <div style={styles.metricsGrid}>
           <div style={styles.metricItem}>
-            <span style={styles.metricLabel}>{isUncertain ? 'Possible model' : 'Model / Trim'}</span>
+            <span style={styles.metricLabel}>{isUncertain || !modelKnown ? 'Model (unconfirmed)' : 'Model / Trim'}</span>
             <span style={styles.metricValue}>{displayModel}</span>
           </div>
 
@@ -322,6 +323,15 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
           <div style={styles.valuationBadge}>
             <DollarSign size={15} color="var(--accent-petrol-teal)" />
             <span style={styles.valuationText}>Estimated Market Value: <strong>{formattedPrice}</strong>{isUncertain ? ' (unverified: based on an uncertain identification)' : ''}</span>
+          </div>
+        )}
+
+        {!formattedPrice && (
+          <div style={styles.valuationBadge}>
+            <DollarSign size={15} color="var(--accent-tangerine)" />
+            <span style={styles.valuationText}>
+              <strong>Market value unavailable.</strong> {valuation.assumptions?.[0]?.replace(/^Market value unavailable:\s*/i, '') || 'No reliable pricing data for this vehicle.'}
+            </span>
           </div>
         )}
 

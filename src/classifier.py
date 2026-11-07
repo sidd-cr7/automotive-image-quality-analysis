@@ -1,5 +1,6 @@
 """ResNet-50 Vehicle Classifier module."""
 
+import gc
 import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
@@ -22,6 +23,14 @@ from .config import (
     IMAGENET_STD,
     DEVICE,
 )
+
+
+def _load_checkpoint(path: str, device):
+    """Load a checkpoint memory-mapped when possible (lower peak RAM); fall back to a normal load."""
+    try:
+        return torch.load(path, map_location=device, weights_only=False, mmap=True)
+    except Exception:
+        return torch.load(path, map_location=device, weights_only=False)
 
 
 @dataclass
@@ -89,15 +98,17 @@ class VehicleClassifier:
         self.model.fc = nn.Linear(in_features, NUM_CLASSES)
 
         # Load state dictionary
-        state_dict = torch.load(str(self.model_path), map_location=self.device, weights_only=False)
+        state_dict = _load_checkpoint(str(self.model_path), self.device)
         if isinstance(state_dict, dict) and "state_dict" in state_dict:
             state_dict = state_dict["state_dict"]
         elif isinstance(state_dict, dict) and "model_state_dict" in state_dict:
             state_dict = state_dict["model_state_dict"]
 
         self.model.load_state_dict(state_dict)
+        del state_dict  # the checkpoint copy is no longer needed; free it before the second model loads
         self.model.to(self.device)
         self.model.eval()
+        gc.collect()
 
         # Optional second model (EfficientNet-B0) averaged with ResNet-50 at the probability level.
         self.secondary = None
@@ -105,7 +116,7 @@ class VehicleClassifier:
             try:
                 eff = models.efficientnet_b0(weights=None)
                 eff.classifier[1] = nn.Linear(eff.classifier[1].in_features, NUM_CLASSES)
-                eff.load_state_dict(torch.load(str(EFFICIENTNET_MODEL_PATH), map_location=self.device, weights_only=False))
+                eff.load_state_dict(_load_checkpoint(str(EFFICIENTNET_MODEL_PATH), self.device))
                 self.secondary = eff.to(self.device).eval()
             except Exception as e:  # keep ResNet-50 alone if the second model cannot load
                 import logging
@@ -145,7 +156,7 @@ class VehicleClassifier:
         tensor = self.transform(pil_img).unsqueeze(0).to(self.device)
 
         embedding = None
-        with torch.no_grad():
+        with torch.inference_mode():
             if extract_embedding:
                 # Forward through backbone up to avgpool
                 x = self.model.conv1(tensor)

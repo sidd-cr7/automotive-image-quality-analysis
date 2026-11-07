@@ -1,6 +1,9 @@
 """End-to-End Vehicle Recognition Pipeline with Multi-Model Architecture, Quality Enhancement, and Prediction Comparison."""
 
+import gc
 import io
+import logging
+import threading
 import time
 from pathlib import Path
 from typing import Union, List, Dict, Any, Optional
@@ -33,6 +36,37 @@ from .branches.interior_engine import InteriorEngineBranch
 from .orchestrator import MultiModelOrchestrator
 
 
+class LazyModel:
+    """Builds a heavy model on first attribute access, exactly once even under concurrent requests.
+
+    Behaves like the wrapped model for attribute access. `loaded` tells whether it has been built.
+    """
+
+    def __init__(self, factory, name: str):
+        self._factory = factory
+        self._name = name
+        self._obj = None
+        self._lock = threading.Lock()
+
+    @property
+    def loaded(self) -> bool:
+        return self._obj is not None
+
+    def _get(self):
+        if self._obj is None:
+            with self._lock:
+                if self._obj is None:
+                    logging.getLogger("autovision.pipeline").info("Loading %s (first use)", self._name)
+                    self._obj = self._factory()
+                    gc.collect()
+        return self._obj
+
+    def __getattr__(self, item):
+        if item.startswith("_"):
+            raise AttributeError(item)
+        return getattr(self._get(), item)
+
+
 class VehicleRecognitionPipeline:
     """
     Integrated Vehicle Recognition Pipeline combining:
@@ -58,8 +92,9 @@ class VehicleRecognitionPipeline:
         vehicle_intelligence_service: Optional[VehicleIntelligenceService] = None,
         orchestrator: Optional[MultiModelOrchestrator] = None,
     ):
-        self.detector = detector or VehicleDetector()
-        self.classifier = classifier or VehicleClassifier()
+        # Heavy models are built on first use (thread-safe, once), so creating the pipeline is cheap.
+        self.detector = detector or LazyModel(VehicleDetector, "YOLO vehicle detector")
+        self.classifier = classifier or LazyModel(VehicleClassifier, "vehicle classifiers")
         self.preprocessor = preprocessor or AdaptivePreprocessor()
         self.classical_analyzer = classical_analyzer or ClassicalCVAnalyzer()
         self.groq_service = groq_service or VisionService()
@@ -68,13 +103,7 @@ class VehicleRecognitionPipeline:
         self.prediction_comparator = prediction_comparator or PredictionComparator()
         self.vehicle_intelligence_service = vehicle_intelligence_service or VehicleIntelligenceService()
 
-        # Try to initialize exterior detector gracefully
-        self.exterior_detector = exterior_detector
-        if self.exterior_detector is None:
-            try:
-                self.exterior_detector = ExteriorComponentDetector()
-            except Exception as e:
-                self.exterior_detector = None
+        self.exterior_detector = exterior_detector or LazyModel(ExteriorComponentDetector, "exterior segmentation model")
 
         # Build branches
         self.branch_1 = VehicleIdentificationBranch(

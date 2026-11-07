@@ -3,14 +3,16 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+import asyncio
+import gc
+import threading
+from typing import TYPE_CHECKING, Optional, List, Dict, Any
 
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException, status
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from src.pipeline import VehicleRecognitionPipeline
 from src.config import (
     DEVICE,
     NUM_CLASSES,
@@ -157,7 +159,11 @@ class MarketValuationModel(BaseModel):
 # Multi-Model Perception Intelligence Schemas
 class VehicleIdentityModel(BaseModel):
     make: str
-    model: str
+    model: Optional[str] = None  # None: only the manufacturer is known
+    model_known: bool = True
+    identity_conflict: bool = False
+    valuation_eligible: bool = False
+    valuation_blocker: str = ""
     estimated_year: Optional[int] = None
     generation: Optional[str] = None
     # None when the Groq vision model changed the identification (it has no calibrated confidence).
@@ -267,20 +273,29 @@ class HealthResponse(BaseModel):
 
 
 # Lazy/Global Pipeline Singleton
-pipeline: Optional[VehicleRecognitionPipeline] = None
+if TYPE_CHECKING:  # not imported at runtime: src.pipeline pulls in torch / ultralytics (hundreds of MB)
+    from src.pipeline import VehicleRecognitionPipeline
+
+pipeline: Optional["VehicleRecognitionPipeline"] = None
+_pipeline_lock = threading.Lock()
+# Memory safety: run one inference at a time by default (raise on bigger instances).
+_inference_gate = asyncio.Semaphore(int(os.getenv("MAX_CONCURRENT_INFERENCES", "1")))
 
 
-def get_pipeline() -> VehicleRecognitionPipeline:
+def get_pipeline() -> "VehicleRecognitionPipeline":
+    """Create the pipeline on first use (single-flight). The heavy models inside it load lazily too."""
     global pipeline
     if pipeline is None:
-        pipeline = VehicleRecognitionPipeline()
+        with _pipeline_lock:
+            if pipeline is None:
+                from src.pipeline import VehicleRecognitionPipeline
+                pipeline = VehicleRecognitionPipeline()
     return pipeline
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Preload pipeline models on application startup."""
-    get_pipeline()
+    """Start instantly: no models are loaded here (Render's 512 MB tier cannot hold them at boot)."""
     yield
 
 
@@ -325,11 +340,14 @@ app.add_middleware(
     tags=["System"],
 )
 def health_check() -> HealthResponse:
-    """Check backend service health and model status across all branches and quality engines."""
-    pipe = get_pipeline()
-    groq_primary = bool(pipe.groq_service and pipe.groq_service._primary_client)
-    groq_backup = bool(pipe.groq_service and pipe.groq_service._backup_client)
-
+    """Lightweight health check. Never builds the pipeline or loads any model."""
+    from src.config import GROQ_API_KEY, GROQ_API_KEY_BACKUP, GEMINI_API_KEY, GROQ_VISION_MODEL, VISION_PROVIDER_ORDER
+    pipe = pipeline  # may be None until the first /predict
+    loaded = lambda m: bool(getattr(m, "loaded", m is not None)) if pipe is not None else False
+    vision = pipe.groq_service.status() if pipe is not None and hasattr(pipe.groq_service, "status") else {
+        "order": [p.strip() for p in VISION_PROVIDER_ORDER.split(",") if p.strip()],
+        "providers": {"gemini": {"configured": bool(GEMINI_API_KEY)}, "groq": {"configured": bool(GROQ_API_KEY or GROQ_API_KEY_BACKUP)}},
+    }
     return HealthResponse(
         status="healthy",
         timestamp=datetime.now(timezone.utc).isoformat(),
@@ -344,13 +362,14 @@ def health_check() -> HealthResponse:
             "num_classes": NUM_CLASSES,
             "classes_mapping": "Stanford Cars (196 classes)",
             "exterior_classes_count": 23,
-            "detector_ready": pipe.detector is not None,
-            "classifier_ready": pipe.classifier is not None,
-            "exterior_ready": pipe.exterior_detector is not None,
-            "groq_primary_configured": groq_primary,
-            "groq_backup_configured": groq_backup,
-            "groq_vision_model": pipe.groq_service.vision_model if pipe.groq_service else None,
-            "vision_providers": pipe.groq_service.status() if hasattr(pipe.groq_service, "status") else None,
+            "models_loaded": pipe is not None,
+            "detector_ready": loaded(pipe.detector) if pipe is not None else False,
+            "classifier_ready": loaded(pipe.classifier) if pipe is not None else False,
+            "exterior_ready": loaded(pipe.exterior_detector) if pipe is not None else False,
+            "groq_primary_configured": bool(GROQ_API_KEY),
+            "groq_backup_configured": bool(GROQ_API_KEY_BACKUP),
+            "groq_vision_model": GROQ_VISION_MODEL,
+            "vision_providers": vision,
         },
     )
 
@@ -472,12 +491,13 @@ async def predict_vehicle(
             detail="Uploaded file is empty or too small to be a valid image.",
         )
 
-    # 3. Execute Pipeline
-    pipe = get_pipeline()
+    # 3. Execute Pipeline (pipeline creation imports torch on first use, so keep it off the event loop)
+    pipe = await asyncio.to_thread(get_pipeline)
     if job_id:
         from src import progress as _progress
         _progress.start(job_id)
     try:
+      async with _inference_gate:
         result = await pipe.process_async(
             image_input=image_bytes,
             conf_threshold=conf_threshold,
@@ -510,7 +530,10 @@ async def predict_vehicle(
 
     if job_id:
         _progress.finish()
-    return PredictResponse(**result)
+    response = PredictResponse(**result)
+    del result, image_bytes  # do not retain the upload or raw prediction data
+    gc.collect()
+    return response
 
 
 @app.post(

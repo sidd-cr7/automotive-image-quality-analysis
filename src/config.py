@@ -2,7 +2,6 @@
 
 import os
 from pathlib import Path
-import torch
 from dotenv import load_dotenv
 
 # Load environment variables from .env file if present
@@ -23,7 +22,8 @@ EXTERIOR_MODEL_PATH = Path(os.getenv("EXTERIOR_MODEL_PATH", str(_default_exterio
 EXTERIOR_CLASSES_PATH = Path(os.getenv("EXTERIOR_CLASSES_PATH", str(PROJECT_ROOT / "classes.txt")))
 
 # Device selection
-DEVICE = os.getenv("TORCH_DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
+# CPU by default: importing torch here would load ~250 MB at startup. Set TORCH_DEVICE=cuda to use a GPU.
+DEVICE = os.getenv("TORCH_DEVICE", "cpu")
 
 # YOLO vehicle detection parameters
 # COCO class IDs: 2: car, 3: motorcycle, 5: bus, 7: truck

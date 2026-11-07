@@ -240,7 +240,9 @@ class VehicleIntelligenceService:
             return spec
 
         # Populate specification from generation record
-        eng_data = matched_gen.get("engine", {})
+        # The exact variant is not established from a photo. Generations ship with several engines, so
+        # engine / transmission / drivetrain are only reported when a variant was explicitly supplied.
+        eng_data = matched_gen.get("engine", {}) if variant else {}
         engine = EngineSpecification(
             displacement=eng_data.get("displacement"),
             configuration=eng_data.get("configuration"),
@@ -251,14 +253,11 @@ class VehicleIntelligenceService:
             cylinders=eng_data.get("cylinders"),
         )
 
-        actual_variant = variant or matched_gen.get("default_variant")
-        verification_status = "verified" if variant else "estimated"
+        actual_variant = variant
+        verification_status = "verified" if variant else "model_level_only"
 
         # Determine effective year
-        effective_year = year
-        if effective_year is None and matched_gen.get("years"):
-            years_list = sorted(matched_gen["years"])
-            effective_year = years_list[len(years_list) // 2]
+        effective_year = year  # never invent a model year
 
         spec = VehicleSpecifications(
             make=matched_vehicle.get("make", make_clean),
@@ -267,11 +266,12 @@ class VehicleIntelligenceService:
             generation=matched_gen.get("generation") or generation,
             variant=actual_variant,
             engine=engine,
-            transmission=matched_gen.get("transmission"),
-            drivetrain=matched_gen.get("drivetrain"),
+            transmission=matched_gen.get("transmission") if variant else None,
+            drivetrain=matched_gen.get("drivetrain") if variant else None,
             body_type=matched_vehicle.get("body_type"),
             seating_capacity=matched_vehicle.get("seating_capacity"),
-            source=matched_gen.get("source", "Manufacturer Official Specifications"),
+            source=matched_gen.get("source", "Manufacturer Official Specifications")
+            + ("" if variant else " (model-level reference only; exact engine/variant not identified)"),
             verification_status=verification_status,
         )
 
@@ -350,6 +350,26 @@ class VehicleIntelligenceService:
             self._val_cache[cache_key] = (now_ts, valuation)
             return valuation
 
+        def _unavailable(reason: str) -> MarketValuation:
+            val = MarketValuation(
+                estimated_price=None, minimum_price=None, maximum_price=None, currency=curr, market_region=region,
+                vehicle_condition=condition or "unknown", mileage=mileage, valuation_type="unavailable",
+                source=reg_info.get("source_name", "Secondary Market Index"), source_url=reg_info.get("source_url", ""),
+                retrieved_at=now_iso, reliability="unavailable", assumptions=[reason],
+            )
+            self._val_cache[cache_key] = (now_ts, val)
+            return val
+
+        # India: official-market pricing only. Imported / grey-market cars are priced very differently
+        # (duties of 100%+, availability, no dealer index), so no figure is produced for them.
+        if region.lower() == "india" and matched_vehicle.get("india_market") == "import_only":
+            return _unavailable(
+                f"Market value unavailable: {matched_vehicle.get('make')} {matched_vehicle.get('model')} is not officially "
+                "sold in India. Import / grey-market pricing (import duty, availability, one-off sales) is not covered by the index."
+            )
+        if year is None:
+            return _unavailable("Market value unavailable: the exact model year could not be established, and age drives depreciation.")
+
         gens = matched_vehicle.get("generations", [])
         matched_gen = self._find_generation(gens, year, generation)
 
@@ -389,15 +409,10 @@ class VehicleIntelligenceService:
 
         # Base MSRP in target currency
         msrp_dict = matched_gen.get("msrp_new", {})
-        base_msrp = float(msrp_dict.get(curr, msrp_dict.get("INR", 0.0)))
+        base_msrp = float(msrp_dict.get(curr, 0.0))
         if base_msrp <= 0.0:
-            # Fallback approximate conversion from INR or USD
-            if "INR" in msrp_dict and curr == "USD":
-                base_msrp = msrp_dict["INR"] / 86.0
-            elif "USD" in msrp_dict and curr == "INR":
-                base_msrp = msrp_dict["USD"] * 86.0
-            else:
-                base_msrp = float(next(iter(msrp_dict.values()), 0.0))
+            # No generic currency conversion or fallback price: only a reference price in the requested currency counts.
+            return _unavailable(f"Market value unavailable: no reference price in {curr} for this model.")
 
         # Vehicle Age & Depreciation Calculation
         age = max(0, current_year - effective_year)
@@ -569,40 +584,41 @@ class VehicleIntelligenceService:
     # -------------------------------------------------------------------------
     # Helper Matching & Depreciation Logic
     # -------------------------------------------------------------------------
+    _GENERIC_MODEL_WORDS = r"\b(sedan|coupe|suv|hatchback|truck|convertible|wagon|van|minivan|pickup|crew cab|cab|\d{4})\b"
+
+    @staticmethod
+    def _norm(text: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", (text or "").lower())
+
     def _find_vehicle_record(self, make: str, model: str) -> Optional[Dict[str, Any]]:
-        """Find matching vehicle entry in catalog using exact and alias matching."""
+        """Find the catalog entry for an EXACT make+model (exact name, exact alias, or whole-word core match).
+
+        Never guesses: a manufacturer alone, a body style alone ("Coupe"), or an unknown model returns None.
+        """
         if not make or not model:
             return None
-
-        vehicles = self._db.get("vehicles", [])
-        make_low = make.lower().strip()
+        make_n = self._norm(make)
         model_low = model.lower().strip()
+        core = re.sub(r"\s+", " ", re.sub(self._GENERIC_MODEL_WORDS, " ", model_low)).strip()
+        if not make_n or not core or model_low in {"unknown", "unidentified", "n/a", "none", "null"}:
+            return None
 
-        # 1. Exact make & model match
-        for v in vehicles:
-            if v.get("make", "").lower() == make_low and v.get("model", "").lower() == model_low:
+        same_make = []
+        for v in self._db.get("vehicles", []):
+            vm = self._norm(v.get("make", ""))
+            if vm == make_n or (min(len(vm), len(make_n)) >= 4 and (vm in make_n or make_n in vm)):
+                same_make.append(v)
+
+        for v in same_make:  # 1. exact model name
+            if v.get("model", "").lower() == model_low:
                 return v
-
-        # 2. Check aliases & sub-tokens
-        for v in vehicles:
-            if v.get("make", "").lower() != make_low:
-                continue
-            aliases = [a.lower() for a in v.get("aliases", [])]
-            for alias in aliases:
-                if alias == model_low or alias in model_low or model_low in alias:
-                    return v
-
-        # 3. Fuzzy model name matching (e.g. "BMW 3 Series Sedan 2012" matching "3 Series")
-        for v in vehicles:
-            v_make = v.get("make", "").lower()
-            v_model = v.get("model", "").lower()
-            if v_make in make_low or make_low in v_make:
-                # Compare main model tokens (e.g., '3 series', 'civic', 'f-150')
-                clean_target = re.sub(r"\b(sedan|coupe|suv|hatchback|truck|convertible|\d{4})\b", "", model_low).strip()
-                clean_candidate = re.sub(r"\b(sedan|coupe|suv|hatchback|truck|convertible|\d{4})\b", "", v_model).strip()
-                if clean_candidate and (clean_candidate in clean_target or clean_target in clean_candidate):
-                    return v
-
+        for v in same_make:  # 2. exact alias
+            if model_low in [a.lower() for a in v.get("aliases", [])] or core in [a.lower() for a in v.get("aliases", [])]:
+                return v
+        for v in same_make:  # 3. whole-word core match ("3 Series Sedan 2012" -> "3 Series")
+            cand = re.sub(r"\s+", " ", re.sub(self._GENERIC_MODEL_WORDS, " ", v.get("model", "").lower())).strip()
+            if len(cand) >= 3 and re.search(rf"(?<![a-z0-9]){re.escape(cand)}(?![a-z0-9])", core):
+                return v
         return None
 
     @staticmethod

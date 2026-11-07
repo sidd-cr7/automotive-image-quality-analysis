@@ -15,7 +15,7 @@
     "supported_regions": {
       "India": {
         "currency": "INR",
-        "currency_symbol": "\u20b9",
+        "currency_symbol": "₹",
         "source_name": "CarWale / CarDekho Indicative Secondary Market Index (India)",
         "source_url": "https://www.carwale.com/used/",
         "standard_annual_mileage_km": 12000,
@@ -33,7 +33,7 @@
       },
       "UK": {
         "currency": "GBP",
-        "currency_symbol": "\u00a3",
+        "currency_symbol": "£",
         "source_name": "AutoTrader UK / Parkers Used Valuation Guide",
         "source_url": "https://www.autotrader.co.uk/",
         "standard_annual_mileage_km": 16000,
@@ -42,7 +42,7 @@
       },
       "Europe": {
         "currency": "EUR",
-        "currency_symbol": "\u20ac",
+        "currency_symbol": "€",
         "source_name": "Mobile.de / AutoScout24 Market Index",
         "source_url": "https://www.autoscout24.com/",
         "standard_annual_mileage_km": 15000,
@@ -1053,7 +1053,8 @@
           "source": "Ford Motor Company Technical Archive",
           "source_url": "https://www.ford.com/"
         }
-      ]
+      ],
+      "india_market": "import_only"
     },
     {
       "make": "Ford",
@@ -1145,7 +1146,8 @@
           "source": "General Motors Official Technical Specifications",
           "source_url": "https://www.chevrolet.com/trucks/silverado/1500"
         }
-      ]
+      ],
+      "india_market": "import_only"
     },
     {
       "make": "Chevrolet",
@@ -1224,7 +1226,8 @@
           "source": "General Motors Technical Archive",
           "source_url": "https://www.chevrolet.com/"
         }
-      ]
+      ],
+      "india_market": "import_only"
     },
     {
       "make": "Maruti Suzuki",
@@ -1805,7 +1808,8 @@
           "source": "FCA Stellantis Official Archive / Kelley Blue Book",
           "source_url": "https://www.kbb.com/dodge/challenger/"
         }
-      ]
+      ],
+      "india_market": "import_only"
     }
   ]
 }

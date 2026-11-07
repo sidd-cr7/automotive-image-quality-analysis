@@ -480,17 +480,22 @@ class MultiModelOrchestrator:
         # 4. Part 4: Vehicle Specifications & Current Market Price Intelligence
         primary_b1_pred = (b1_selected.get("predictions", []) or [{}])[0]
         final_make = verdict.get("final_make") or primary_b1_pred.get("make", "Unknown")
-        final_model = verdict.get("final_model") or primary_b1_pred.get("model", "Unknown")
+        provider_used = verdict.get("verdict_status") in ("verified", "provider_assessed")
+        # Provider verdict: its model may legitimately be unknown (make only). Classifier fallback: its own model.
+        final_model = verdict.get("final_model") if provider_used else primary_b1_pred.get("model")
         final_year = verdict.get("final_estimated_year")
-        if final_year is None:
+        if final_year is None and not (provider_used and verdict.get("final_make")):
             final_year = primary_b1_pred.get("year", None)
         generation = verdict.get("final_generation")
+        identity = self._vehicle_identity_block(
+            final_make, final_model, final_year, generation, primary_b1_pred, b1_selected.get("confidence", 0.0), verdict
+        )
 
         try:
             vehicle_specs, market_valuation = self.vehicle_intelligence_service.analyze_vehicle_intelligence(
                 vehicle_identity={
                     "make": final_make,
-                    "model": final_model,
+                    "model": final_model or "",
                     "estimated_year": final_year,
                     "generation": generation,
                     "variant": None,
@@ -523,6 +528,18 @@ class MultiModelOrchestrator:
         progress.end("final")
         CURRENT_FRAME.reset(_frame_token)
         REQUEST_ID.reset(_request_token)
+        if not identity["valuation_eligible"]:
+            # Never price a vehicle whose identity is uncertain, in conflict, or missing its model/year.
+            market_valuation = {
+                "currency": currency or "INR",
+                "market_region": market_region or "India",
+                "valuation_type": "unavailable",
+                "source": "Not computed",
+                "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                "reliability": "unavailable",
+                "assumptions": ["Market value unavailable: " + identity["valuation_blocker"]],
+            }
+
         elapsed_total_ms = (time.perf_counter() - start_time) * 1000.0
 
         # Update image versions record to reflect intelligent selection
@@ -627,9 +644,26 @@ class MultiModelOrchestrator:
         else:
             source, confidence, uncertain = "classifier_only", round(b1_conf, 4), primary_b1.get("is_uncertain", False)
             note = "Local classifier result only. No vision provider was available for this image."
+        model_known = bool(final_model) and norm(final_model) not in ("unknown", "unidentified")
+        conflict = bool(used and clf_make and (
+            norm(final_make) != norm(clf_make) or (model_known and norm(final_model) != norm(clf_model))))
+        if not model_known:
+            blocker = "only the manufacturer could be identified, not the exact model."
+        elif conflict:
+            blocker = "the vision model and the classifier disagree about the vehicle."
+        elif uncertain:
+            blocker = "the identification is uncertain, so a precise valuation would be misleading."
+        elif final_year is None:
+            blocker = "the exact model year is not established."
+        else:
+            blocker = ""
         return {
             "make": final_make,
-            "model": final_model,
+            "model": final_model if model_known else None,
+            "model_known": model_known,
+            "identity_conflict": conflict,
+            "valuation_eligible": not blocker,
+            "valuation_blocker": blocker,
             "estimated_year": final_year,
             "generation": generation,
             "confidence": confidence,

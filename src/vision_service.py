@@ -352,11 +352,17 @@ class VisionService(GroqService):
         v = res.get("vehicle") or {}
         preds = branch_1_result.get("predictions", [])
         top = preds[0] if preds else {}
-        make = v.get("make") or top.get("make", "Unknown")
-        model = v.get("model") or top.get("model", "Unknown")
-        year = v.get("year_estimate") if v.get("year_estimate") is not None else top.get("year")
         norm = lambda x: re.sub(r"[^a-z0-9]", "", str(x or "").lower())
-        changed = bool(v.get("make")) and (norm(make) != norm(top.get("make")) or norm(model) not in (norm(top.get("model")) + norm(top.get("label"))))
+        vmake, vmodel = v.get("make"), v.get("model")
+        if vmake:
+            make = vmake
+            # Manufacturer only -> the model is UNKNOWN. Never convert a make into a model, and never
+            # borrow the classifier's model (it may belong to a different manufacturer).
+            model = vmodel or None
+            year = v.get("year_estimate") if vmodel else None
+        else:
+            make, model, year = top.get("make", "Unknown"), top.get("model"), top.get("year")
+        changed = bool(vmake) and (norm(make) != norm(top.get("make")) or (bool(model) and norm(model) not in (norm(top.get("model")) + norm(top.get("label")))))
         corrections = []
         if changed and top:
             corrections.append({"field": "make/model", "original_value": f"{top.get('make')} {top.get('model')}",

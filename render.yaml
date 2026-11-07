@@ -10,6 +10,15 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.11
+      # Low-memory settings: CPU inference, one thread pool, less glibc fragmentation, one inference at a time.
+      - key: TORCH_DEVICE
+        value: cpu
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      - key: MAX_CONCURRENT_INFERENCES
+        value: "1"
       # Secrets: values are entered in the Render dashboard, never stored in this file.
       - key: GEMINI_API_KEY
         sync: false
