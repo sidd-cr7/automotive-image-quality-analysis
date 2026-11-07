@@ -147,15 +147,16 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
   const displayType = engine.configuration || specs.body_type || 'Unavailable';
   const displayDisplacement = engine.displacement || 'Unavailable';
 
-  // Format market valuation price
+  // Format market valuation price (only ever present when a verified live source returned it)
   let formattedPrice = null;
+  let priceRange = null;
   if (valuation?.estimated_price) {
-    if (valuation.currency === 'INR') {
-      const lakhs = (valuation.estimated_price / 100000).toFixed(1);
-      formattedPrice = `₹ ${lakhs} Lakhs (${valuation.market_region || 'India'})`;
-    } else {
-      formattedPrice = `${valuation.currency || '$'} ${valuation.estimated_price.toLocaleString()}`;
-    }
+    const fmt = (v) => {
+      if (valuation.currency === 'INR') return v >= 1e7 ? `₹ ${(v / 1e7).toFixed(2)} Cr` : `₹ ${(v / 1e5).toFixed(1)} Lakh`;
+      return `${valuation.currency || '$'} ${Math.round(v).toLocaleString()}`;
+    };
+    formattedPrice = `${fmt(valuation.estimated_price)} (${valuation.market_region || 'India'})`;
+    if (valuation.minimum_price && valuation.maximum_price) priceRange = `${fmt(valuation.minimum_price)} – ${fmt(valuation.maximum_price)}`;
   }
 
   // Brand emblem generator/lookup
@@ -398,7 +399,8 @@ export default function ResultsArea({ resultData, isLoading, analysis }) {
         {formattedPrice && (
           <div style={styles.valuationBadge}>
             <DollarSign size={15} color="var(--accent-petrol-teal)" />
-            <span style={styles.valuationText}>Estimated Market Value: <strong>{formattedPrice}</strong>{isUncertain ? ' (unverified: based on an uncertain identification)' : ''}</span>
+            <span style={styles.valuationText}>Estimated Market Value: <strong>{formattedPrice}</strong>{isUncertain ? ' (unverified: based on an AI-identified model)' : ''}</span>
+            {priceRange && <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-ink-muted)', marginTop: 4 }}>RANGE {priceRange} · {valuation.source} · ASKING PRICES, AI-SUMMARISED FROM A LIVE WEB SEARCH, NOT VERIFIED</span>}
           </div>
         )}
 

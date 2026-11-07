@@ -120,6 +120,7 @@ class VehicleIntelligenceService:
         self.enable_specifications = enable_specifications
         self.enable_valuation = enable_valuation
         # Catalogue MSRP x depreciation is NOT market data. Off unless explicitly enabled (FORMULA_VALUATION=true).
+        self.live_pricing = os.getenv('LIVE_MARKET_PRICING', 'true').lower() in ('true', '1', 'yes')
         self.allow_formula_estimates = (os.getenv('FORMULA_VALUATION', 'false').lower() in ('true', '1', 'yes')
                                         if allow_formula_estimates is None else allow_formula_estimates)
 
@@ -330,6 +331,27 @@ class VehicleIntelligenceService:
 
         make_clean = make.strip()
         model_clean = model.strip()
+
+        # Real-time listings first (Gemini + Google Search grounding). Accepted only when verifiable; else fall through.
+        if self.live_pricing and year and make_clean and model_clean:
+            from src.market_provider import lookup_live_prices
+            live = lookup_live_prices(make_clean, model_clean, int(year), region, curr)
+            if live:
+                years = sorted({x.get("year") for x in live["listings"] if x.get("year")})
+                valuation = MarketValuation(
+                    estimated_price=live["median"], minimum_price=live["min"], maximum_price=live["max"], currency=curr,
+                    market_region=region, vehicle_condition=condition or "unknown", mileage=mileage,
+                    valuation_type="live_listings", source="Live listings found by Gemini web search: " + ", ".join(live["sources"]),
+                    retrieved_at=now_iso, reliability="indicative",
+                    assumptions=[
+                        f"Median of {len(live['listings'])} current asking prices (asking, not sale, prices); range shown.",
+                        "Summarised by an AI model from a live web search and not independently verified.",
+                        f"Listing years: {', '.join(map(str, years))}." if years else "Listing years not stated.",
+                        *( [live["notes"]] if live.get("notes") else [] ),
+                    ],
+                )
+                self._val_cache[cache_key] = (now_ts, valuation)
+                return valuation
 
         matched_vehicle = self._find_vehicle_record(make_clean, model_clean)
         if not matched_vehicle:

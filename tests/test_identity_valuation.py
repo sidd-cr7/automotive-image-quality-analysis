@@ -79,6 +79,13 @@ def test_full_agreement_with_confident_classifier_is_eligible_for_valuation():
     assert b["identity_conflict"] is False and b["valuation_eligible"] is True and b["confidence"] == 0.8
 
 
-def test_provider_exact_model_that_contradicts_classifier_is_not_priced():
-    b = _block("Dodge", "Challenger", 2011, {"verdict_status": "provider_assessed", "verdict_provider": "gemini"})
-    assert b["model_known"] is True and b["identity_conflict"] is True and b["valuation_eligible"] is False
+def test_provider_exact_model_with_weak_classifier_noise_can_be_priced_from_live_listings():
+    b = _block("Dodge", "Challenger", 2018, {"verdict_status": "provider_assessed", "verdict_provider": "gemini"})
+    assert b["model_known"] is True and b["identity_conflict"] is True  # still flagged and shown
+    assert b["valuation_eligible"] is True and b["is_uncertain"] is True  # priced, but labelled AI-identified / unverified
+
+
+def test_provider_model_contradicting_a_confident_classifier_is_not_priced():
+    clf = {"make": "McLaren", "model": "MP4-12C Coupe", "label": "McLaren MP4-12C Coupe 2012", "year": 2012, "is_uncertain": False}
+    b = _block("Dodge", "Challenger", 2018, {"verdict_status": "provider_assessed", "verdict_provider": "gemini"}, clf, 0.6)
+    assert b["valuation_eligible"] is False and "confident classifier" in b["valuation_blocker"]

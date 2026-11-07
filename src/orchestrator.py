@@ -689,11 +689,12 @@ class MultiModelOrchestrator:
         model_known = bool(final_model) and norm(final_model) not in ("unknown", "unidentified")
         conflict = bool(used and clf_make and (
             norm(final_make) != norm(clf_make) or (model_known and norm(final_model) != norm(clf_model))))
+        strong_conflict = conflict and b1_conf >= 0.25  # a 5% classifier guess disagreeing is noise, not a conflict
         if not model_known:
             blocker = "only the manufacturer could be identified, not the exact model."
-        elif conflict:
-            blocker = "the vision model and the classifier disagree about the vehicle."
-        elif uncertain:
+        elif strong_conflict:
+            blocker = "the vision model and a confident classifier disagree about the vehicle."
+        elif uncertain and not used:
             blocker = "the identification is uncertain, so a precise valuation would be misleading."
         elif final_year is None:
             blocker = "the exact model year is not established."
