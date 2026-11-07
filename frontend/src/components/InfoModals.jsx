@@ -2,7 +2,8 @@ import React from 'react';
 import { X, Clock, BarChart2, BookOpen, ExternalLink, Cpu, CheckCircle } from 'lucide-react';
 
 export default function InfoModals({ activeTab, onClose, historyItems }) {
-  if (activeTab === 'detect' || activeTab === 'landing' || !activeTab) return null;
+  // Only the three info tabs open this overlay; every full page (landing, detect, visuals, intermediate) must not.
+  if (!['history', 'analytics', 'about'].includes(activeTab)) return null;
 
   return (
     <div style={styles.overlay} onClick={onClose}>

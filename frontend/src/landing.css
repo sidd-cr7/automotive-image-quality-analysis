@@ -256,4 +256,6 @@
 }
 
 /* Long sidebar labels (e.g. Intermediate Representations) wrap instead of overflowing */
-.sidebar-nav-label { text-align: center; line-height: 1.15; overflow-wrap: anywhere; }
+.sidebar-nav-label { text-align: center; line-height: 1.15; overflow-wrap: break-word; }
+/* Long item name: smaller type so whole words fit instead of breaking mid-word */
+.sidebar-nav-btn[title="Intermediate Representations"] .sidebar-nav-label { font-size: 0.56rem; letter-spacing: 0; }
