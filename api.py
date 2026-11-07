@@ -385,6 +385,9 @@ def health_check() -> HealthResponse:
             "classes_mapping": "Stanford Cars (196 classes)",
             "exterior_classes_count": 23,
             "models_loaded": pipe is not None,
+            # Which commit is live (Render sets RENDER_GIT_COMMIT) and whether the legacy formula pricing is enabled.
+            "build_commit": (os.getenv("RENDER_GIT_COMMIT") or "local")[:7],
+            "formula_valuation_enabled": os.getenv("FORMULA_VALUATION", "false").lower() in ("true", "1", "yes"),
             "detector_ready": loaded(pipe.detector) if pipe is not None else False,
             "classifier_ready": loaded(pipe.classifier) if pipe is not None else False,
             "exterior_ready": loaded(pipe.exterior_detector) if pipe is not None else False,
