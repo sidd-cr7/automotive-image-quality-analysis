@@ -253,8 +253,8 @@ class ImageQualityAssessor:
         if lines is not None and len(lines) >= 4:
             angles = []
             lengths = []
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
+            # HoughLinesP returns (N,1,4) on some OpenCV builds and (N,4) on others; flatten to (N,4).
+            for x1, y1, x2, y2 in np.asarray(lines).reshape(-1, 4).astype(float):
                 dx = x2 - x1
                 dy = y2 - y1
                 length = math.sqrt(dx**2 + dy**2)

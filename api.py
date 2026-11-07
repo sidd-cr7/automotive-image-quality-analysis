@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 import asyncio
+import logging
 import gc
 import threading
 from typing import TYPE_CHECKING, Optional, List, Dict, Any
@@ -380,8 +381,9 @@ async def get_progress(job_id: str):
     from src import progress as _progress
     state = _progress.get(job_id)
     if state is None:
-        raise HTTPException(status_code=404, detail="Unknown job id.")
-    return state
+        # Not registered yet (the client polls while the upload / first model import is still running).
+        return {"current": None, "completed": [], "done": False, "known": False, "elapsed_s": 0.0}
+    return {**state, "known": True}
 
 
 @app.post(
@@ -454,6 +456,10 @@ async def predict_vehicle(
     - Branch 3: Interior & engine cabin analysis (Groq Vision with failover)
     - Final Verdict: Synthesized verification and fact/inference distinction
     """
+    if job_id:
+        from src import progress as _progress
+        _progress.start(job_id)
+
     # 1. Validate File Existence and MIME/Filename
     if not file.filename:
         raise HTTPException(
@@ -493,9 +499,6 @@ async def predict_vehicle(
 
     # 3. Execute Pipeline (pipeline creation imports torch on first use, so keep it off the event loop)
     pipe = await asyncio.to_thread(get_pipeline)
-    if job_id:
-        from src import progress as _progress
-        _progress.start(job_id)
     try:
       async with _inference_gate:
         result = await pipe.process_async(
@@ -518,11 +521,17 @@ async def predict_vehicle(
             currency=currency,
         )
     except ValueError as val_err:
+        logging.getLogger("autovision.api").warning("predict rejected input: %s", val_err)
+        if job_id:
+            _progress.finish()
         raise HTTPException(
             status_code=422,
             detail="Image validation error: the file could not be decoded as a valid image (JPEG, PNG, WEBP or BMP).",
         )
     except Exception as exc:
+        logging.getLogger("autovision.api").exception("predict failed (%s: %s)", type(exc).__name__, exc)
+        if job_id:
+            _progress.finish()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal inference failure: {str(exc)}",

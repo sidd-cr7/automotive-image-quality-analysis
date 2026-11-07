@@ -111,13 +111,18 @@ export default function App() {
     xhr.open('POST', endpoint);
     xhr.timeout = 300000;
 
+    let misses = 0;
     const poll = setInterval(async () => {
       try {
         const r = await fetch(`${apiBase}/progress/${jobId}`);
-        if (r.ok) {
-          const p = await r.json();
-          setAnalysis((a) => (a ? { ...a, current: p.current, completed: p.completed } : a));
+        if (!r.ok) {
+          if (++misses >= 5) clearInterval(poll); // endpoint missing or erroring: stop instead of hammering it
+          return;
         }
+        misses = 0;
+        const p = await r.json();
+        setAnalysis((a) => (a ? { ...a, current: p.current, completed: p.completed } : a));
+        if (p.done) clearInterval(poll); // finished (success or failure): no more polling
       } catch {
         /* progress is best-effort; the main request reports real errors */
       }
