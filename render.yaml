@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: engine-intelligence
+    runtime: python
+    # PyTorch + YOLO + two classifiers will not fit the 512 MB starter tier; change the plan if you must.
+    plan: standard
+    buildCommand: pip install -r requirements.txt && pip uninstall -y opencv-python && pip install --force-reinstall --no-deps opencv-python-headless && cd frontend && npm ci && npm run build
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      # Secrets: values are entered in the Render dashboard, never stored in this file.
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_API_KEY_BACKUP
+        sync: false
